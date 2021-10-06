@@ -21,7 +21,7 @@ public class MediaPlayerFragment extends Fragment {
         player = new SimpleExoPlayer.Builder(context).build();
 
         // Load default song coming the app
-        Uri default_song_uri = Uri.parse("android.resource://com.my.package/" + R.raw.default_tiga__make_me_fall_in_love__benny_benassi_remix);
+        Uri default_song_uri = Uri.parse("android.resource://com.my.package/" + R.raw.default_song);
         player.setMediaItem(MediaItem.fromUri(default_song_uri));
         player.prepare();
     }
