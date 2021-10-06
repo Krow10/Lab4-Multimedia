@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Lab4-Multimedia</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="settings">Settings</string>
+    <string name="action_settings">Open settings</string>
+    <string name="equalizer">Equalizer</string>
+    <string name="action_equalizer">Open equalizer settings</string>
+
 </resources>
