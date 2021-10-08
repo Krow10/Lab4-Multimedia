@@ -11,24 +11,18 @@ import android.widget.ImageButton;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.ui.PlayerControlView;
+
+import java.util.List;
 
 public class MediaPlayerFragment extends Fragment {
     private SimpleExoPlayer player;
 
-    public MediaPlayerFragment(Context context) {
+    public MediaPlayerFragment(Context context, Player.Listener song_info_listener) {
         player = new SimpleExoPlayer.Builder(context).build();
-
-        // Load default song coming the app
-        Uri default_song_uri = Uri.parse("android.resource://com.my.package/" + R.raw.default_song);
-        player.setMediaItem(MediaItem.fromUri(default_song_uri));
-        player.prepare();
-    }
-
-    public static MediaPlayerFragment newInstance(Context context) {
-        MediaPlayerFragment fragment = new MediaPlayerFragment(context);
-        return fragment;
+        player.addListener(song_info_listener);
     }
 
     @Override
@@ -66,5 +60,20 @@ public class MediaPlayerFragment extends Fragment {
         }
 
         return rootView;
+    }
+
+    public void changeSong(Uri new_song_uri) {
+        player.setMediaItem(MediaItem.fromUri(new_song_uri));
+        player.prepare();
+
+        if (player.isPlaying())
+            player.play();
+    }
+
+    public void createPlaylist(List<Uri> playlist) {
+        player.clearMediaItems();
+        for (Uri song : playlist) {
+            player.addMediaItem(MediaItem.fromUri(song));
+        }
     }
 }
