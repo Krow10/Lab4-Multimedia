@@ -1,6 +1,8 @@
 package com.example.lab4_multimedia;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -81,6 +83,9 @@ public class MainActivity extends AppCompatActivity {
                                 source_intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                                 songLibrarySourceResult.launch(source_intent);
                                 break;
+
+                            default:
+                                break;
                         }
 
                         return true;
@@ -92,5 +97,11 @@ public class MainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        ((NotificationManager)(getSystemService(Context.NOTIFICATION_SERVICE))).cancelAll();
+        super.onDestroy();
     }
 }

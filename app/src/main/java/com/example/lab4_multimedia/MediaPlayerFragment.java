@@ -70,10 +70,13 @@ public class MediaPlayerFragment extends Fragment {
         getParentFragmentManager().setFragmentResultListener("player_control_action", this, new FragmentResultListener() {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-                if (result.getBoolean("action_prev"))
-                    previousSong();
-                else if (result.getBoolean("action_next"))
-                    nextSong();
+                if (result.getBoolean("action_prev")) {
+                    if (player.hasPreviousWindow())
+                        player.seekToPreviousWindow();
+                }  else if (result.getBoolean("action_next")) {
+                    if (player.hasNextWindow())
+                        player.seekToNextWindow();
+                }
             }
         });
     }
@@ -113,20 +116,22 @@ public class MediaPlayerFragment extends Fragment {
         return rootView;
     }
 
-    public void previousSong() {
-        if (player.hasPreviousWindow())
-            player.seekToPreviousWindow();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (player_notif != null)
+            player_notif.setPlayer(null);
+
+        if (player != null) {
+            player.release();
+            player = null;
+        }
     }
 
     public void changeCurrentSong(Uri new_song_uri) {
         player.setMediaItem(new MediaItem.Builder().setUri(new_song_uri).setTag(new_song_uri).build());
         player.prepare();
         player.play();
-    }
-
-    public void nextSong() {
-        if (player.hasNextWindow())
-            player.seekToNextWindow();
     }
 
     public void createPlaylist(List<Uri> playlist) {
