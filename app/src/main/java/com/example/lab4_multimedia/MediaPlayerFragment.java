@@ -1,33 +1,81 @@
 package com.example.lab4_multimedia;
 
+import static com.google.android.exoplayer2.Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED;
+
 import android.content.Context;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.ui.PlayerControlView;
+import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 
 import java.util.List;
 
 public class MediaPlayerFragment extends Fragment {
+    private MediaMetadataRetriever mmr;
     private SimpleExoPlayer player;
+    private PlayerNotificationManager player_notif;
 
-    public MediaPlayerFragment(Context context, Player.Listener song_info_listener) {
+    public MediaPlayerFragment(Context context) {
+        mmr = new MediaMetadataRetriever();
         player = new SimpleExoPlayer.Builder(context).build();
-        player.addListener(song_info_listener);
+        player.addListener(new Player.Listener() {
+            @Override
+            public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
+                if (mediaItem != null) {
+                    String title = getSongMetadata((Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
+                    String artist = getSongMetadata((Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                    Log.d("mediaMetadataChanged", title + " by " + artist);
+                    Bundle song_info = new Bundle();
+                    song_info.putString("title", title == null ? "Unknown" : title);
+                    song_info.putString("artist", artist == null ? "Unknown" : artist);
+                    getParentFragmentManager().setFragmentResult("song_info_curr", song_info);
+
+                    if (player.getMediaItemCount() > 1) // Actualize playlist controls info on current song changing
+                        sendPlaylistControlInfo();
+                }
+            }
+
+            @Override
+            public void onTimelineChanged(Timeline timeline, int reason) { // Actualize playlist controls info on playlist creation
+                if (reason == TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
+                    sendPlaylistControlInfo();
+                }
+            }
+        });
+
+        player_notif = new PlayerNotificationManager.Builder(context, 1337, "1337").build();
+        player_notif.setPlayer(player);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        getParentFragmentManager().setFragmentResultListener("player_control_action", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                if (result.getBoolean("action_prev"))
+                    previousSong();
+                else if (result.getBoolean("action_next"))
+                    nextSong();
+            }
+        });
     }
 
     @Override
@@ -59,21 +107,82 @@ public class MediaPlayerFragment extends Fragment {
             });
         }
 
+        // Load 'invalid' song to show default message when starting app
+        changeCurrentSong(Uri.parse(""));
+
         return rootView;
     }
 
-    public void changeSong(Uri new_song_uri) {
-        player.setMediaItem(MediaItem.fromUri(new_song_uri));
-        player.prepare();
+    public void previousSong() {
+        if (player.hasPreviousWindow())
+            player.seekToPreviousWindow();
+    }
 
-        if (player.isPlaying())
-            player.play();
+    public void changeCurrentSong(Uri new_song_uri) {
+        player.setMediaItem(new MediaItem.Builder().setUri(new_song_uri).setTag(new_song_uri).build());
+        player.prepare();
+        player.play();
+    }
+
+    public void nextSong() {
+        if (player.hasNextWindow())
+            player.seekToNextWindow();
     }
 
     public void createPlaylist(List<Uri> playlist) {
         player.clearMediaItems();
-        for (Uri song : playlist) {
-            player.addMediaItem(MediaItem.fromUri(song));
+
+        player.setMediaItem(new MediaItem.Builder().setUri(playlist.get(0)).setTag(playlist.get(0)).build()); // Set the first item to auto-start playing
+        for (Uri song : playlist.subList(1, playlist.size())) {
+            player.addMediaItem(new MediaItem.Builder().setUri(song).setTag(song).build());
         }
+
+        player.prepare();
+        player.play();
+    }
+
+    private String getSongMetadata(Uri uri, int tag) {
+        try {
+            mmr.setDataSource(requireContext(), uri);
+        } catch (IllegalArgumentException e) {
+            return "Choose a song from your preferred library";
+        }
+        return mmr.extractMetadata(tag);
+    }
+
+    private void sendPlaylistControlInfo() {
+        Bundle hide_controls = new Bundle();
+        Bundle previous_control_data = new Bundle();
+        Bundle next_control_data = new Bundle();
+
+        if (player.hasPreviousWindow()) {
+            MediaItem previous = player.getMediaItemAt(player.getPreviousWindowIndex());
+
+            String title = getSongMetadata((Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
+            String artist = getSongMetadata((Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+
+            previous_control_data.putString("title", title == null ? "Unknown" : title);
+            previous_control_data.putString("artist", artist == null ? "Unknown" : artist);
+            hide_controls.putBoolean("hide_prev", false);
+        } else {
+            hide_controls.putBoolean("hide_prev", true);
+        }
+
+        if (player.hasNextWindow()) {
+            MediaItem next = player.getMediaItemAt(player.getNextWindowIndex());
+
+            String title = getSongMetadata((Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
+            String artist = getSongMetadata((Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+
+            next_control_data.putString("title", title == null ? "Unknown" : title);
+            next_control_data.putString("artist", artist == null ? "Unknown" : artist);
+            hide_controls.putBoolean("hide_next", false);
+        } else {
+            hide_controls.putBoolean("hide_next", true);
+        }
+
+        getParentFragmentManager().setFragmentResult("action_hide_control", hide_controls);
+        getParentFragmentManager().setFragmentResult("song_info_prev", previous_control_data);
+        getParentFragmentManager().setFragmentResult("song_info_next", next_control_data);
     }
 }

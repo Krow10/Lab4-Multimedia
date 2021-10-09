@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,16 +28,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Load default song when starting app
-        Uri default_song_uri = Uri.parse("android.resource://com.my.package/" + R.raw.default_song);
-
-        //PlaylistControlFragment playlist_controller = new PlaylistControlFragment();
-        SongInfoFragment song_info = new SongInfoFragment(true);
-        MediaPlayerFragment player = new MediaPlayerFragment(getApplicationContext(), song_info.createSongInfoListener());
-        player.changeSong(default_song_uri);
+        PlaylistControlFragment playlist_controller = new PlaylistControlFragment();
+        SongInfoFragment song_info = new SongInfoFragment(true, SongInfoFragment.RegisterFor.SONG_INFO_CURRENT);
+        MediaPlayerFragment player = new MediaPlayerFragment(getApplicationContext());
 
         getSupportFragmentManager().beginTransaction()
-                //.replace(R.id.playlist_control_container, playlist_controller)
+                .replace(R.id.playlist_control_container, playlist_controller)
                 .replace(R.id.player_container, player)
                 .replace(R.id.song_info_container, song_info)
                 .commit();
@@ -48,16 +45,19 @@ public class MainActivity extends AppCompatActivity {
                         if (data != null) { // checking empty selection
                             if (data.getClipData() != null) { // checking multiple selection or not
                                 List<Uri> new_playlist = new ArrayList<>();
-                                for (int i = 0; i < data.getClipData().getItemCount(); i++) { // Selection order is not preserved from chooser activity
+                                for (int i = 0; i < data.getClipData().getItemCount(); i++) { // NB : Selection order is preserved from chooser activity depending on devices
                                     Uri song_uri = data.getClipData().getItemAt(i).getUri();
                                     new_playlist.add(song_uri);
                                     Log.d("NewSong", song_uri.toString());
                                 }
 
                                 player.createPlaylist(new_playlist);
+                                Snackbar.make(findViewById(R.id.song_library_fab), "Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", Snackbar.LENGTH_SHORT)
+                                        .setAnchorView(findViewById(R.id.song_library_fab))
+                                        .show();
                             } else {
                                 Log.d("NewSong", data.getData().toString());
-                                player.changeSong(data.getData());
+                                player.changeCurrentSong(data.getData());
                             }
                         }
                     }

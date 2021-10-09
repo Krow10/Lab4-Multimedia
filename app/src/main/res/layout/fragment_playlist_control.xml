@@ -6,12 +6,13 @@
     android:layout_height="match_parent"
     tools:context=".PlaylistControlFragment">
 
-    <com.google.android.material.card.MaterialCardView
+    <LinearLayout
         android:id="@+id/playlist_control_previous_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        android:paddingVertical="6dp"
         android:orientation="horizontal"
         android:background="@drawable/bg_playlist_control_left">
 
@@ -28,6 +29,31 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"/>
 
-    </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/playlist_control_next_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:paddingVertical="6dp"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_playlist_control_right">
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/playlist_control_next_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"/>
+
+        <ImageButton
+            android:id="@+id/playlist_control_next"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_baseline_chevron_right"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
