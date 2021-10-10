@@ -24,8 +24,6 @@
         app:played_color="?colorSecondaryVariant"
         app:buffered_color="?colorSecondary"
         app:unplayed_color="?colorButtonNormal"
-        app:ad_marker_color="?colorOnSecondary"
-        app:played_ad_marker_color="?colorOnSecondary"
         style="@style/ExoStyledControls.TimeBar"/>
 
     <TextView
@@ -71,13 +69,15 @@
             android:id="@id/exo_play"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/ExoMediaButton.Play" />
+            style="@style/ExoMediaButton.Play"
+            app:tint="?colorSecondary"/>
 
         <ImageButton
             android:id="@id/exo_pause"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            style="@style/ExoMediaButton.Pause"/>
+            style="@style/ExoMediaButton.Pause"
+            app:tint="?colorSecondary"/>
 
     </FrameLayout>
 
@@ -94,12 +94,12 @@
 
     <ImageButton
         android:id="@+id/empty"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="@dimen/exo_small_icon_width"
+        android:layout_height="@dimen/exo_small_icon_height"
         app:layout_constraintTop_toBottomOf="@id/exo_progress"
         app:layout_constraintBottom_toBottomOf="@id/play_pause_container"
         app:layout_constraintLeft_toRightOf="@id/exo_ffwd"
         app:layout_constraintRight_toRightOf="parent"
-        style="@style/ExoStyledControls.Button.Bottom.RepeatToggle"/>
+        android:background="@null"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

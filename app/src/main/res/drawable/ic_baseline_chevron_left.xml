@@ -1,9 +1,11 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="@dimen/playlist_control_icon_size"
     android:height="@dimen/playlist_control_icon_size"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-  <path
-      android:fillColor="?colorSecondaryVariant"
-      android:pathData="M15.41,7.41L14,6l-6,6 6,6 1.41,-1.41L10.83,12z"/>
+    android:viewportWidth="12"
+    android:viewportHeight="12">
+  <group android:translateX="-4" android:translateY="-6">
+    <path
+        android:fillColor="?colorSecondaryVariant"
+        android:pathData="M15.41,7.41L14,6l-6,6 6,6 1.41,-1.41L10.83,12z"/>
+  </group>
 </vector>

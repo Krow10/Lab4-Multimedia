@@ -4,16 +4,15 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
 public class PlaylistControlFragment extends Fragment {
-    private LinearLayout previous_layout;
-    private LinearLayout next_layout;
+    private ConstraintLayout previous_layout;
+    private ConstraintLayout next_layout;
     private SongInfoFragment previous_info;
     private SongInfoFragment next_info;
 
@@ -37,10 +36,7 @@ public class PlaylistControlFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_playlist_control, container, false);
 
         previous_layout = rootView.findViewById(R.id.playlist_control_previous_layout);
-        next_layout = rootView.findViewById(R.id.playlist_control_next_layout);
-
-        ImageButton previous = rootView.findViewById(R.id.playlist_control_previous);
-        previous.setOnClickListener(new View.OnClickListener() {
+        previous_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Bundle action = new Bundle();
@@ -49,8 +45,8 @@ public class PlaylistControlFragment extends Fragment {
             }
         });
 
-        ImageButton next = rootView.findViewById(R.id.playlist_control_next);
-        next.setOnClickListener(new View.OnClickListener() {
+        next_layout = rootView.findViewById(R.id.playlist_control_next_layout);
+        next_layout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Bundle action = new Bundle();

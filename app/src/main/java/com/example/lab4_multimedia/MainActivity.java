@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
@@ -31,13 +32,13 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         PlaylistControlFragment playlist_controller = new PlaylistControlFragment();
-        SongInfoFragment song_info = new SongInfoFragment(true, SongInfoFragment.RegisterFor.SONG_INFO_CURRENT);
+        SongInfoFragment playing_song_info = new SongInfoFragment(true, SongInfoFragment.RegisterFor.SONG_INFO_CURRENT);
         MediaPlayerFragment player = new MediaPlayerFragment(getApplicationContext());
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.playlist_control_container, playlist_controller)
                 .replace(R.id.player_container, player)
-                .replace(R.id.song_info_container, song_info)
+                .replace(R.id.song_info_container, playing_song_info)
                 .commit();
 
         songLibrarySourceResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
@@ -54,9 +55,12 @@ public class MainActivity extends AppCompatActivity {
                                 }
 
                                 player.createPlaylist(new_playlist);
-                                Snackbar.make(findViewById(R.id.song_library_fab), "Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", Snackbar.LENGTH_SHORT)
+                                Snackbar.make(findViewById(R.id.song_library_fab), "Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", BaseTransientBottomBar.LENGTH_LONG)
                                         .setAnchorView(findViewById(R.id.song_library_fab))
-                                        .show();
+                                        .setAction("Dismiss", new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {} // Snackbar automatically dismiss when action is clicked
+                                        }).show();
                             } else {
                                 Log.d("NewSong", data.getData().toString());
                                 player.changeCurrentSong(data.getData());
@@ -75,7 +79,6 @@ public class MainActivity extends AppCompatActivity {
                     public boolean onMenuItemClick(MenuItem item) {
                         switch (item.getItemId()) {
                             case R.id.source_local_device:
-                                // TODO : Get song from local device
                                 Intent source_intent = new Intent();
                                 source_intent.setType("audio/*");
                                 source_intent.setAction(Intent.ACTION_GET_CONTENT);

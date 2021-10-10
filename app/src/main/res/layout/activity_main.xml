@@ -58,7 +58,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
-            app:menu="@menu/bottom_app_bar" />
+            app:menu="@menu/bottom_app_bar">
+
+            <TextView
+                android:id="@+id/app_bar_app_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="?colorOnPrimary"
+                android:textStyle="bold"
+                android:textSize="8pt"/>
+
+        </com.google.android.material.bottomappbar.BottomAppBar>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/song_library_fab"

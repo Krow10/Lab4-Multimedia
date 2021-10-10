@@ -33,7 +33,10 @@ public class MediaPlayerFragment extends Fragment {
 
     public MediaPlayerFragment(Context context) {
         mmr = new MediaMetadataRetriever();
-        player = new SimpleExoPlayer.Builder(context).build();
+        player = new SimpleExoPlayer.Builder(context)
+                .setSeekBackIncrementMs(10000)
+                .setSeekForwardIncrementMs(10000)
+                .build();
         player.addListener(new Player.Listener() {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
@@ -110,9 +113,6 @@ public class MediaPlayerFragment extends Fragment {
             });
         }
 
-        // Load 'invalid' song to show default message when starting app
-        changeCurrentSong(Uri.parse(""));
-
         return rootView;
     }
 
@@ -150,7 +150,7 @@ public class MediaPlayerFragment extends Fragment {
         try {
             mmr.setDataSource(requireContext(), uri);
         } catch (IllegalArgumentException e) {
-            return "Choose a song from your preferred library";
+            return "";
         }
         return mmr.extractMetadata(tag);
     }
@@ -160,7 +160,7 @@ public class MediaPlayerFragment extends Fragment {
         Bundle previous_control_data = new Bundle();
         Bundle next_control_data = new Bundle();
 
-        if (player.hasPreviousWindow()) {
+        if (player.getCurrentWindowIndex() != 0 && player.hasPreviousWindow()) { // Don't display previous control if it's first song in playlist (when 'repeat all' is toggled)
             MediaItem previous = player.getMediaItemAt(player.getPreviousWindowIndex());
 
             String title = getSongMetadata((Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
@@ -173,7 +173,7 @@ public class MediaPlayerFragment extends Fragment {
             hide_controls.putBoolean("hide_prev", true);
         }
 
-        if (player.hasNextWindow()) {
+        if (player.getCurrentWindowIndex() != player.getMediaItemCount() - 1 && player.hasNextWindow()) { // Don't display next control if it's last song in playlist (same)
             MediaItem next = player.getMediaItemAt(player.getNextWindowIndex());
 
             String title = getSongMetadata((Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
