@@ -17,7 +17,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
@@ -55,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
 
                                 player.createPlaylist(new_playlist);
-                                Snackbar.make(findViewById(R.id.song_library_fab), "Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", BaseTransientBottomBar.LENGTH_LONG)
+                                Snackbar.make(findViewById(R.id.song_library_fab), "Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", Snackbar.LENGTH_LONG)
                                         .setAnchorView(findViewById(R.id.song_library_fab))
                                         .setAction("Dismiss", new View.OnClickListener() {
                                             @Override

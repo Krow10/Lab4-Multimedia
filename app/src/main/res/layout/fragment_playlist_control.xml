@@ -13,7 +13,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="@id/control_previous_right"
-        android:paddingVertical="12dp"
+        android:paddingVertical="8dp"
         android:orientation="horizontal"
         android:background="@drawable/bg_playlist_control_left"
         android:visibility="invisible"
@@ -38,7 +38,7 @@
             app:layout_constraintLeft_toRightOf="@id/playlist_control_previous"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constrainedWidth="true"
-            android:layout_margin="6dp"/>
+            android:layout_margin="8dp"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -63,7 +63,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintLeft_toLeftOf="@id/control_next_left"
         app:layout_constraintRight_toRightOf="parent"
-        android:paddingVertical="12dp"
+        android:paddingVertical="8dp"
         android:orientation="horizontal"
         android:background="@drawable/bg_playlist_control_right"
         android:visibility="invisible"
@@ -79,7 +79,7 @@
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toLeftOf="@id/playlist_control_next"
             app:layout_constrainedWidth="true"
-            android:layout_margin="6dp"/>
+            android:layout_margin="8dp"/>
 
         <ImageView
             android:id="@+id/playlist_control_next"
