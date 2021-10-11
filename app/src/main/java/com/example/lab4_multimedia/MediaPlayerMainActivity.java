@@ -14,18 +14,27 @@ import android.widget.PopupMenu;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.SuccessContinuation;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.ListResult;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MediaPlayerMainActivity extends AppCompatActivity {
+    private FirebaseAuth firebase_auth;
+    private FirebaseStorage firebase_storage;
     private ActivityResultLauncher<Intent> songLibrarySourceResult;
     private boolean offline_mode;
 
@@ -34,6 +43,8 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media_player_main);
 
+        firebase_auth = FirebaseAuth.getInstance();
+        firebase_storage = FirebaseStorage.getInstance();
         offline_mode = getIntent().getBooleanExtra("offline_mode", false);
 
         PlaylistControlsFragment playlist_controller = new PlaylistControlsFragment();
@@ -81,7 +92,7 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
             public boolean onMenuItemClick(MenuItem item) {
                 switch (item.getItemId()) {
                     case R.id.action_sign_out:
-                        FirebaseAuth.getInstance().signOut();
+                        firebase_auth.signOut();
                         startActivity(new Intent(MediaPlayerMainActivity.this, MainActivity.class));
                         finish();
                         break;
@@ -114,6 +125,28 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
 
                             case R.id.source_cloud:
                                 // TODO : Select and upload sound to cloud
+                                StorageReference song_directory = firebase_storage.getReference("songs");
+                                song_directory.listAll().addOnCompleteListener(new OnCompleteListener<ListResult>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<ListResult> task) {
+                                        if (task.isSuccessful()) {
+                                            for (StorageReference song : task.getResult().getItems())
+                                                Log.d("Cloud", "Song : " + song.getName());
+
+
+                                            task.getResult().getItems().get(0).getDownloadUrl().onSuccessTask(new SuccessContinuation<Uri, Object>() {
+                                                @NonNull
+                                                @Override
+                                                public Task<Object> then(Uri uri) throws Exception {
+                                                    player.changeCurrentSong(uri);
+                                                    return null;
+                                                }
+                                            });
+                                        } else {
+                                            Log.w("Cloud", "Could not retrieve song library : " + task.getException());
+                                        }
+                                    }
+                                });
                                 break;
 
                             default:
