@@ -14,4 +14,10 @@
         android:title="@string/settings"
         android:contentDescription="@string/action_settings"
         app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_sign_out"
+        android:title="Sign out"
+        android:contentDescription="Sign out of your cloud account"
+        app:showAsAction="never"/>
 </menu>

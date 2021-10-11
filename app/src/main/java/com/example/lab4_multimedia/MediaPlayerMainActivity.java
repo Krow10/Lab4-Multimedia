@@ -15,9 +15,12 @@ import android.widget.PopupMenu;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
+import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +74,26 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                     }
                 });
 
+        BottomAppBar app_bar = findViewById(R.id.bottom_app_bar);
+        app_bar.getMenu().findItem(R.id.action_sign_out).setEnabled(!offline_mode); // TODO : Remove option entirely from menu instead ?
+        app_bar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_sign_out:
+                        FirebaseAuth.getInstance().signOut();
+                        startActivity(new Intent(MediaPlayerMainActivity.this, MainActivity.class));
+                        finish();
+                        break;
+
+                    default:
+                        break;
+                }
+
+                return true;
+            }
+        });
+
         FloatingActionButton song_library_fab = findViewById(R.id.song_library_fab);
         song_library_fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,6 +112,10 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                                 songLibrarySourceResult.launch(source_intent);
                                 break;
 
+                            case R.id.source_cloud:
+                                // TODO : Select and upload sound to cloud
+                                break;
+
                             default:
                                 break;
                         }
@@ -103,6 +130,13 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                 popup.show();
             }
         });
+
+        song_library_fab.post(() -> {
+            if (getIntent().hasExtra("signed_in_has"))
+                Snackbar.make(findViewById(android.R.id.content), "Welcome back " + getIntent().getStringExtra("signed_in_has") + " !", Snackbar.LENGTH_LONG)
+                        .setAnchorView(findViewById(R.id.song_library_fab))
+                        .show();
+        }); // Wait for FAB to be ready before anchoring the snackbar's view
     }
 
     @Override

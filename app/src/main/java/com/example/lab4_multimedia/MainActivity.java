@@ -2,17 +2,25 @@ package com.example.lab4_multimedia;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+
 public class MainActivity extends AppCompatActivity {
+    private FirebaseAuth firebase_auth;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        firebase_auth = FirebaseAuth.getInstance();
 
         Button offline_mode = findViewById(R.id.offline_mode_button);
         offline_mode.setOnClickListener(new View.OnClickListener() {
@@ -39,5 +47,21 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this, SignUpActivity.class));
             }
         });
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = firebase_auth.getCurrentUser();
+        if(currentUser != null) {
+            Log.d("Main", "User " + currentUser.getEmail() + " is logged in !");
+            Intent start_media_player = new Intent(MainActivity.this, MediaPlayerMainActivity.class);
+            start_media_player.putExtra("signed_in_has", currentUser.getEmail());
+            startActivity(start_media_player);
+            finish();
+        } else {
+            Log.d("Main", "No user logged in");
+        }
     }
 }
