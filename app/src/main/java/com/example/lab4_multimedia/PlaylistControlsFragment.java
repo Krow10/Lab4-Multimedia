@@ -10,13 +10,13 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
-public class PlaylistControlFragment extends Fragment {
+public class PlaylistControlsFragment extends Fragment {
     private ConstraintLayout previous_layout;
     private ConstraintLayout next_layout;
     private SongInfoFragment previous_info;
     private SongInfoFragment next_info;
 
-    public PlaylistControlFragment() {}
+    public PlaylistControlsFragment() {}
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -33,7 +33,7 @@ public class PlaylistControlFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_playlist_control, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_playlist_controls, container, false);
 
         previous_layout = rootView.findViewById(R.id.playlist_control_previous_layout);
         previous_layout.setOnClickListener(new View.OnClickListener() {
