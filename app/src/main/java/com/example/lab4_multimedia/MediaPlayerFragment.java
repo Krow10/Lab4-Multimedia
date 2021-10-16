@@ -27,7 +27,7 @@ import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 import java.util.List;
 
 public class MediaPlayerFragment extends Fragment {
-    private MediaMetadataRetriever mmr;
+    private static MediaMetadataRetriever mmr;
     private SimpleExoPlayer player;
     private PlayerNotificationManager player_notif;
 
@@ -41,8 +41,8 @@ public class MediaPlayerFragment extends Fragment {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 if (mediaItem != null) {
-                    String title = getSongMetadata((Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
-                    String artist = getSongMetadata((Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                    String title = getSongMetadata(requireContext(), (Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
+                    String artist = getSongMetadata(requireContext(), (Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
                     Log.d("mediaMetadataChanged", title + " by " + artist);
                     Bundle song_info = new Bundle();
                     song_info.putString("title", title == null ? "Unknown" : title);
@@ -146,13 +146,15 @@ public class MediaPlayerFragment extends Fragment {
         player.play();
     }
 
-    private String getSongMetadata(Uri uri, int tag) {
+    public static String getSongMetadata(Context ctx, Uri uri, int tag) {
         try {
-            mmr.setDataSource(requireContext(), uri);
+            mmr.setDataSource(ctx, uri);
         } catch (IllegalArgumentException e) {
-            return "";
+            return "Unknown";
         }
-        return mmr.extractMetadata(tag);
+
+        final String tag_value = mmr.extractMetadata(tag);
+        return tag_value == null ? "Unknown" : tag_value;
     }
 
     private void sendPlaylistControlInfo() {
@@ -163,11 +165,11 @@ public class MediaPlayerFragment extends Fragment {
         if (player.getCurrentWindowIndex() != 0 && player.hasPreviousWindow()) { // Don't display previous control if it's first song in playlist (when 'repeat all' is toggled)
             MediaItem previous = player.getMediaItemAt(player.getPreviousWindowIndex());
 
-            String title = getSongMetadata((Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
-            String artist = getSongMetadata((Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            String title = getSongMetadata(requireContext(), (Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
+            String artist = getSongMetadata(requireContext(), (Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
 
-            previous_control_data.putString("title", title == null ? "Unknown" : title);
-            previous_control_data.putString("artist", artist == null ? "Unknown" : artist);
+            previous_control_data.putString("title", title);
+            previous_control_data.putString("artist", artist);
             hide_controls.putBoolean("hide_prev", false);
         } else {
             hide_controls.putBoolean("hide_prev", true);
@@ -176,11 +178,11 @@ public class MediaPlayerFragment extends Fragment {
         if (player.getCurrentWindowIndex() != player.getMediaItemCount() - 1 && player.hasNextWindow()) { // Don't display next control if it's last song in playlist (same)
             MediaItem next = player.getMediaItemAt(player.getNextWindowIndex());
 
-            String title = getSongMetadata((Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
-            String artist = getSongMetadata((Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            String title = getSongMetadata(requireContext(), (Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
+            String artist = getSongMetadata(requireContext(), (Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
 
-            next_control_data.putString("title", title == null ? "Unknown" : title);
-            next_control_data.putString("artist", artist == null ? "Unknown" : artist);
+            next_control_data.putString("title", title);
+            next_control_data.putString("artist", artist);
             hide_controls.putBoolean("hide_next", false);
         } else {
             hide_controls.putBoolean("hide_next", true);

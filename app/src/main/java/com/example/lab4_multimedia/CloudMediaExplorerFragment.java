@@ -1,0 +1,197 @@
+package com.example.lab4_multimedia;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.SuccessContinuation;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.ListResult;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+
+import java.util.ArrayList;
+
+public class CloudMediaExplorerFragment extends DialogFragment {
+    public static String TAG = "CloudMediaExplorerDialog";
+
+    private FirebaseStorage firebase_storage;
+    private ActivityResultLauncher<Intent> cloud_song_upload_result;
+
+    private RecyclerView cloud_library_content;
+    private CloudLibraryContentAdapter cloud_library_adapter;
+
+    public CloudMediaExplorerFragment() {}
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        firebase_storage = FirebaseStorage.getInstance();
+        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>());
+        refreshCloudLibrary();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_cloud_media_explorer, container, false);
+
+        cloud_library_content = rootView.findViewById(R.id.cloud_library_content);
+        cloud_library_content.setLayoutManager(new LinearLayoutManager(getContext()));
+        cloud_library_content.setAdapter(cloud_library_adapter);
+
+        cloud_song_upload_result = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+            @Override
+            public void onActivityResult(ActivityResult result) {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) { // checking empty selection
+                        if (data.getClipData() != null) { // checking multiple selection or not
+                            for (int i = 0; i < data.getClipData().getItemCount(); i++) { // NB : Selection order is preserved from chooser activity depending on devices
+                                Uri song_uri = data.getClipData().getItemAt(i).getUri();
+                                uploadSong(song_uri);
+                            }
+                        } else {
+                            uploadSong(data.getData());
+                            Log.d("NewSong", data.getData().toString());
+                        }
+//                        Snackbar.make(findViewById(R.id.song_library_fab), "Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", Snackbar.LENGTH_LONG)
+//                                .setAnchorView(findViewById(R.id.song_library_fab))
+//                                .setAction("Dismiss", new View.OnClickListener() {
+//                                    @Override
+//                                    public void onClick(View v) {} // Snackbar automatically dismiss when action is clicked
+//                                }).show();
+                    }
+                }
+            }
+        });
+
+        Button shuffle_play = rootView.findViewById(R.id.cloud_shuffle_play_button);
+        shuffle_play.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Handle shuffle click
+            }
+        });
+
+        Button add_songs = rootView.findViewById(R.id.cloud_add_songs_button);
+        add_songs.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Handle add songs click
+                Intent source_intent = new Intent();
+                source_intent.setType("audio/*");
+                source_intent.setAction(Intent.ACTION_GET_CONTENT);
+                source_intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
+                source_intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                cloud_song_upload_result.launch(source_intent);
+            }
+        });
+
+        return rootView;
+    }
+
+    @Override
+    public void onResume() {
+        // Resize the dialog (from @JJ86, https://stackoverflow.com/a/19133940)
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        int width = metrics.widthPixels;
+        int height = metrics.heightPixels;
+        requireDialog().getWindow().setLayout((6 * width)/7, (4 * height)/5);
+
+        super.onResume();
+    }
+
+    private void uploadSong(Uri local) {
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setCustomMetadata("title", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_TITLE))
+                .setCustomMetadata("artist", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_ARTIST))
+                .build();
+
+        StorageReference song_ref = firebase_storage.getReference().child("songs/" + local.getLastPathSegment());
+        song_ref.putFile(local, metadata).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+                if (task.isSuccessful()) {
+                    Log.d(getTag(), "Uploaded file (" + local + ") successfully !");
+                } else {
+                    Log.e(getTag(), "Could not upload file (" + local + ") : " + task.getException());
+                }
+            }
+        }).continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
+            @Override
+            public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
+                if (!task.isSuccessful())
+                    throw task.getException();
+
+                return song_ref.getDownloadUrl();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<Uri>() {
+            @Override
+            public void onComplete(@NonNull Task<Uri> task) {
+                if (task.isSuccessful())
+                    cloud_library_adapter.addSong(new CloudSongItem(task.getResult(), metadata.getCustomMetadata("title"), metadata.getCustomMetadata("artist")));
+                else
+                    Log.e(getTag(), "Could not retrieve file url after upload !");
+            }
+        });
+    }
+
+    private void refreshCloudLibrary() {
+        cloud_library_adapter.clearSongs();
+        StorageReference song_directory = firebase_storage.getReference("songs");
+        song_directory.listAll().addOnCompleteListener(new OnCompleteListener<ListResult>() {
+            @Override
+            public void onComplete(@NonNull Task<ListResult> task) {
+                if (task.isSuccessful()) {
+                    for (StorageReference song : task.getResult().getItems()) {
+                        song.getMetadata().onSuccessTask(new SuccessContinuation<StorageMetadata, Object>() {
+                            @NonNull
+                            @Override
+                            public Task<Object> then(StorageMetadata storageMetadata) throws Exception {
+                                song.getDownloadUrl().onSuccessTask(new SuccessContinuation<Uri, Object>() {
+                                    @NonNull
+                                    @Override
+                                    public Task<Object> then(Uri uri) throws Exception {
+                                        CloudSongItem new_song = new CloudSongItem(
+                                                uri,
+                                                storageMetadata.getCustomMetadata("title"),
+                                                storageMetadata.getCustomMetadata("artist"));
+                                        cloud_library_adapter.addSong(new_song);
+                                        Log.d("CloudData", "Added " + new_song.toString());
+                                        return null;
+                                    }
+                                });
+
+                                return null;
+                            }
+                        });
+                    }
+                } else {
+                    Log.w("Cloud", "Could not retrieve song library : " + task.getException());
+                }
+            }
+        });
+    }
+}

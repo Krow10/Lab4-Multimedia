@@ -14,20 +14,14 @@ import android.widget.PopupMenu;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.SuccessContinuation;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.ListResult;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +29,7 @@ import java.util.List;
 public class MediaPlayerMainActivity extends AppCompatActivity {
     private FirebaseAuth firebase_auth;
     private FirebaseStorage firebase_storage;
-    private ActivityResultLauncher<Intent> songLibrarySourceResult;
+    private ActivityResultLauncher<Intent> song_library_source_result;
     private boolean offline_mode;
 
     @Override
@@ -57,7 +51,7 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                 .replace(R.id.song_info_container, playing_song_info)
                 .commit();
 
-        songLibrarySourceResult = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+        song_library_source_result = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK) {
                         Intent data = result.getData();
@@ -120,33 +114,12 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                                 source_intent.setAction(Intent.ACTION_GET_CONTENT);
                                 source_intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true);
                                 source_intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                                songLibrarySourceResult.launch(source_intent);
+                                song_library_source_result.launch(source_intent);
                                 break;
 
                             case R.id.source_cloud:
-                                // TODO : Select and upload sound to cloud
-                                StorageReference song_directory = firebase_storage.getReference("songs");
-                                song_directory.listAll().addOnCompleteListener(new OnCompleteListener<ListResult>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<ListResult> task) {
-                                        if (task.isSuccessful()) {
-                                            for (StorageReference song : task.getResult().getItems())
-                                                Log.d("Cloud", "Song : " + song.getName());
-
-
-                                            task.getResult().getItems().get(0).getDownloadUrl().onSuccessTask(new SuccessContinuation<Uri, Object>() {
-                                                @NonNull
-                                                @Override
-                                                public Task<Object> then(Uri uri) throws Exception {
-                                                    player.changeCurrentSong(uri);
-                                                    return null;
-                                                }
-                                            });
-                                        } else {
-                                            Log.w("Cloud", "Could not retrieve song library : " + task.getException());
-                                        }
-                                    }
-                                });
+                                CloudMediaExplorerFragment cloud_explorer = new CloudMediaExplorerFragment();
+                                cloud_explorer.show(getSupportFragmentManager(), CloudMediaExplorerFragment.TAG);
                                 break;
 
                             default:
