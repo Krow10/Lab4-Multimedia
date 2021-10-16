@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.URLUtil;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
@@ -24,6 +25,7 @@ import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.ui.PlayerControlView;
 import com.google.android.exoplayer2.ui.PlayerNotificationManager;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class MediaPlayerFragment extends Fragment {
@@ -41,12 +43,13 @@ public class MediaPlayerFragment extends Fragment {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 if (mediaItem != null) {
-                    String title = getSongMetadata(requireContext(), (Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
-                    String artist = getSongMetadata(requireContext(), (Uri) mediaItem.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+                    Uri song_uri = (Uri) mediaItem.playbackProperties.tag;
+                    String title = getSongMetadata(requireContext(), song_uri, MediaMetadataRetriever.METADATA_KEY_TITLE, isExternalUri(song_uri));
+                    String artist = getSongMetadata(requireContext(), song_uri, MediaMetadataRetriever.METADATA_KEY_ARTIST, isExternalUri(song_uri));
                     Log.d("mediaMetadataChanged", title + " by " + artist);
                     Bundle song_info = new Bundle();
-                    song_info.putString("title", title == null ? "Unknown" : title);
-                    song_info.putString("artist", artist == null ? "Unknown" : artist);
+                    song_info.putString("title", title);
+                    song_info.putString("artist", artist);
                     getParentFragmentManager().setFragmentResult("song_info_curr", song_info);
 
                     if (player.getMediaItemCount() > 1) // Actualize playlist controls info on current song changing
@@ -128,6 +131,10 @@ public class MediaPlayerFragment extends Fragment {
         }
     }
 
+    public boolean isExternalUri(Uri uri) {
+        return URLUtil.isValidUrl(uri.toString()) && !(URLUtil.isFileUrl(uri.toString()) || URLUtil.isContentUrl(uri.toString()));
+    }
+
     public void changeCurrentSong(Uri new_song_uri) {
         player.setMediaItem(new MediaItem.Builder().setUri(new_song_uri).setTag(new_song_uri).build());
         player.prepare();
@@ -146,9 +153,12 @@ public class MediaPlayerFragment extends Fragment {
         player.play();
     }
 
-    public static String getSongMetadata(Context ctx, Uri uri, int tag) {
+    public static String getSongMetadata(@Nullable Context ctx, Uri uri, int tag, boolean external_uri) {
         try {
-            mmr.setDataSource(ctx, uri);
+            if (external_uri)
+                mmr.setDataSource(uri.toString(), new HashMap<String, String>());
+            else
+                mmr.setDataSource(ctx, uri);
         } catch (IllegalArgumentException e) {
             return "Unknown";
         }
@@ -164,9 +174,10 @@ public class MediaPlayerFragment extends Fragment {
 
         if (player.getCurrentWindowIndex() != 0 && player.hasPreviousWindow()) { // Don't display previous control if it's first song in playlist (when 'repeat all' is toggled)
             MediaItem previous = player.getMediaItemAt(player.getPreviousWindowIndex());
+            Uri previous_uri = (Uri) previous.playbackProperties.tag;
 
-            String title = getSongMetadata(requireContext(), (Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
-            String artist = getSongMetadata(requireContext(), (Uri) previous.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            String title = getSongMetadata(requireContext(), previous_uri, MediaMetadataRetriever.METADATA_KEY_TITLE, isExternalUri(previous_uri));
+            String artist = getSongMetadata(requireContext(), previous_uri, MediaMetadataRetriever.METADATA_KEY_ARTIST, isExternalUri(previous_uri));
 
             previous_control_data.putString("title", title);
             previous_control_data.putString("artist", artist);
@@ -177,9 +188,10 @@ public class MediaPlayerFragment extends Fragment {
 
         if (player.getCurrentWindowIndex() != player.getMediaItemCount() - 1 && player.hasNextWindow()) { // Don't display next control if it's last song in playlist (same)
             MediaItem next = player.getMediaItemAt(player.getNextWindowIndex());
+            Uri next_uri = (Uri) next.playbackProperties.tag;
 
-            String title = getSongMetadata(requireContext(), (Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_TITLE);
-            String artist = getSongMetadata(requireContext(), (Uri) next.playbackProperties.tag, MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            String title = getSongMetadata(requireContext(), next_uri, MediaMetadataRetriever.METADATA_KEY_TITLE, isExternalUri(next_uri));
+            String artist = getSongMetadata(requireContext(), next_uri, MediaMetadataRetriever.METADATA_KEY_ARTIST, isExternalUri(next_uri));
 
             next_control_data.putString("title", title);
             next_control_data.putString("artist", artist);

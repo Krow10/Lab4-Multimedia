@@ -1,5 +1,7 @@
 package com.example.lab4_multimedia;
 
+import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -7,12 +9,31 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 
 public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibraryContentAdapter.CloudSongViewHolder> {
     private ArrayList<CloudSongItem> song_library;
+    private FragmentManager parent_dialog_fm;
+
+    public class CloudSongItemListener implements View.OnClickListener {
+        private FragmentManager fm;
+        private Uri song_url;
+
+        public CloudSongItemListener(FragmentManager fm, Uri song_url) {
+            this.fm = fm;
+            this.song_url = song_url;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Bundle song_selection = new Bundle();
+            song_selection.putParcelable("single", song_url);
+            fm.setFragmentResult("cloud_songs_selection", song_selection);
+        }
+    }
 
     public class CloudSongViewHolder extends RecyclerView.ViewHolder {
         private TextView song_title_view;
@@ -34,23 +55,15 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         }
     }
 
-    public CloudLibraryContentAdapter(ArrayList<CloudSongItem> data) {
+    public CloudLibraryContentAdapter(ArrayList<CloudSongItem> data, FragmentManager fm) {
         this.song_library = data;
+        this.parent_dialog_fm = fm;
     }
 
     @NonNull
     @Override
     public CloudSongViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.cloud_song_item, parent, false);
-
-        // TODO : Setup long click listener for editing tags ?
-        view.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                return true;
-            }
-        });
-
         return new CloudSongViewHolder(view);
     }
 
@@ -59,6 +72,7 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         Log.d("BindViewHolder", "Title : " + song_library.get(position).getTitle() + " / Artist : " + song_library.get(position).getArtist());
         holder.getSongTitleView().setText(song_library.get(position).getTitle());
         holder.getSongArtistView().setText(song_library.get(position).getArtist());
+        holder.itemView.setOnClickListener(new CloudSongItemListener(parent_dialog_fm, song_library.get(position).getUrl()));
     }
 
     @Override

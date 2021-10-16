@@ -49,7 +49,7 @@ public class CloudMediaExplorerFragment extends DialogFragment {
         super.onCreate(savedInstanceState);
 
         firebase_storage = FirebaseStorage.getInstance();
-        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>());
+        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
         refreshCloudLibrary();
     }
 
@@ -91,7 +91,7 @@ public class CloudMediaExplorerFragment extends DialogFragment {
         shuffle_play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Handle shuffle click
+                // TODO : Handle shuffle click
             }
         });
 
@@ -99,7 +99,6 @@ public class CloudMediaExplorerFragment extends DialogFragment {
         add_songs.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // Handle add songs click
                 Intent source_intent = new Intent();
                 source_intent.setType("audio/*");
                 source_intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -118,15 +117,15 @@ public class CloudMediaExplorerFragment extends DialogFragment {
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int width = metrics.widthPixels;
         int height = metrics.heightPixels;
-        requireDialog().getWindow().setLayout((6 * width)/7, (4 * height)/5);
+        requireDialog().getWindow().setLayout((6 * width)/7, (3 * height)/4);
 
         super.onResume();
     }
 
     private void uploadSong(Uri local) {
         StorageMetadata metadata = new StorageMetadata.Builder()
-                .setCustomMetadata("title", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_TITLE))
-                .setCustomMetadata("artist", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_ARTIST))
+                .setCustomMetadata("title", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_TITLE, false))
+                .setCustomMetadata("artist", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_ARTIST, false))
                 .build();
 
         StorageReference song_ref = firebase_storage.getReference().child("songs/" + local.getLastPathSegment());
@@ -174,8 +173,7 @@ public class CloudMediaExplorerFragment extends DialogFragment {
                                     @NonNull
                                     @Override
                                     public Task<Object> then(Uri uri) throws Exception {
-                                        CloudSongItem new_song = new CloudSongItem(
-                                                uri,
+                                        CloudSongItem new_song = new CloudSongItem(uri,
                                                 storageMetadata.getCustomMetadata("title"),
                                                 storageMetadata.getCustomMetadata("artist"));
                                         cloud_library_adapter.addSong(new_song);

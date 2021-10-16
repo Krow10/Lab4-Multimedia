@@ -14,8 +14,10 @@ import android.widget.PopupMenu;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.FragmentResultListener;
 
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -30,6 +32,7 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
     private FirebaseAuth firebase_auth;
     private FirebaseStorage firebase_storage;
     private ActivityResultLauncher<Intent> song_library_source_result;
+    private CloudMediaExplorerFragment cloud_explorer_dialog;
     private boolean offline_mode;
 
     @Override
@@ -50,6 +53,20 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                 .replace(R.id.player_container, player)
                 .replace(R.id.song_info_container, playing_song_info)
                 .commit();
+
+        getSupportFragmentManager().setFragmentResultListener("cloud_songs_selection", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                Log.d("CloudSongSelection", "Received result : " + result);
+                cloud_explorer_dialog.dismiss();
+                if (result.getParcelable("single") != null)
+                    player.changeCurrentSong(result.getParcelable("single"));
+                else if (result.getParcelable("playlist") != null)
+                    player.createPlaylist(result.getParcelable("playlist"));
+                else
+                    Log.d("CloudSongSelection", "No song selected");
+            }
+        });
 
         song_library_source_result = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -118,8 +135,8 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                                 break;
 
                             case R.id.source_cloud:
-                                CloudMediaExplorerFragment cloud_explorer = new CloudMediaExplorerFragment();
-                                cloud_explorer.show(getSupportFragmentManager(), CloudMediaExplorerFragment.TAG);
+                                cloud_explorer_dialog = new CloudMediaExplorerFragment();
+                                cloud_explorer_dialog.show(getSupportFragmentManager(), CloudMediaExplorerFragment.TAG);
                                 break;
 
                             default:
