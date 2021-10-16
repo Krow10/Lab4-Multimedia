@@ -1,4 +1,4 @@
-package com.example.lab4_multimedia;
+package com.example.lab4_multimedia.cloud_media_explorer;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -22,6 +22,8 @@ import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.lab4_multimedia.R;
+import com.example.lab4_multimedia.media_player.MediaPlayerFragment;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.SuccessContinuation;
@@ -88,6 +90,7 @@ public class CloudMediaExplorerFragment extends DialogFragment {
             }
         });
 
+        // TODO : Prevent crash when no data => Disable until all data received ?
         Button shuffle_play = rootView.findViewById(R.id.cloud_shuffle_play_button);
         shuffle_play.setOnClickListener(new View.OnClickListener() {
             @Override

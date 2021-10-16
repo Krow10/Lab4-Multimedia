@@ -1,4 +1,4 @@
-package com.example.lab4_multimedia;
+package com.example.lab4_multimedia.media_player;
 
 import android.app.Activity;
 import android.app.NotificationManager;
@@ -19,6 +19,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.FragmentResultListener;
 
+import com.example.lab4_multimedia.MainActivity;
+import com.example.lab4_multimedia.R;
+import com.example.lab4_multimedia.cloud_media_explorer.CloudMediaExplorerFragment;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;

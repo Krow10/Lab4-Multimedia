@@ -1,4 +1,4 @@
-package com.example.lab4_multimedia;
+package com.example.lab4_multimedia.media_player;
 
 import static com.google.android.exoplayer2.Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED;
 
@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
+import com.example.lab4_multimedia.R;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -153,6 +154,7 @@ public class MediaPlayerFragment extends Fragment {
         player.play();
     }
 
+    // TODO : Investigate very laggy metadata retrieval for external uri => Build cache ?
     public static String getSongMetadata(@Nullable Context ctx, Uri uri, int tag, boolean external_uri) {
         try {
             if (external_uri)

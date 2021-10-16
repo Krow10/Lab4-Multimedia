@@ -1,4 +1,4 @@
-package com.example.lab4_multimedia;
+package com.example.lab4_multimedia.cloud_media_explorer;
 
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,6 +11,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.lab4_multimedia.R;
 
 import java.util.ArrayList;
 import java.util.List;

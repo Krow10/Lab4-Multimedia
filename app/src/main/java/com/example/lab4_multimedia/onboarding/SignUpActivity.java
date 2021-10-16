@@ -1,4 +1,4 @@
-package com.example.lab4_multimedia;
+package com.example.lab4_multimedia.onboarding;
 
 import android.content.Intent;
 import android.graphics.Color;
@@ -18,6 +18,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.lab4_multimedia.R;
+import com.example.lab4_multimedia.media_player.MediaPlayerMainActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;

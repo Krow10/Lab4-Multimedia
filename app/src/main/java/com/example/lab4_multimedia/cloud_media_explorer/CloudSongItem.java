@@ -1,4 +1,4 @@
-package com.example.lab4_multimedia;
+package com.example.lab4_multimedia.cloud_media_explorer;
 
 import android.net.Uri;
 

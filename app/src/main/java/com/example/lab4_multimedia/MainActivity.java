@@ -9,6 +9,9 @@ import android.widget.Button;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.lab4_multimedia.media_player.MediaPlayerMainActivity;
+import com.example.lab4_multimedia.onboarding.SignInActivity;
+import com.example.lab4_multimedia.onboarding.SignUpActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 

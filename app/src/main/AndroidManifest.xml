@@ -21,13 +21,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SignInActivity"
+            android:name=".onboarding.SignInActivity"
             android:exported="true" />
         <activity
-            android:name=".SignUpActivity"
+            android:name=".onboarding.SignUpActivity"
             android:exported="true" />
         <activity
-            android:name=".MediaPlayerMainActivity"
+            android:name=".media_player.MediaPlayerMainActivity"
             android:exported="true"/>
     </application>
 
