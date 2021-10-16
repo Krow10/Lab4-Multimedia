@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibraryContentAdapter.CloudSongViewHolder> {
     private ArrayList<CloudSongItem> song_library;
@@ -83,6 +84,14 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
     public void addSong(CloudSongItem new_song) {
         song_library.add(new_song);
         notifyItemInserted(getItemCount() - 1);
+    }
+
+    public List<Uri> getSongUriList() {
+        List<Uri> uris = new ArrayList<>();
+        for (int i = 0; i < getItemCount(); ++i)
+            uris.add(song_library.get(i).getUrl());
+
+        return uris;
     }
 
     public void clearSongs() {

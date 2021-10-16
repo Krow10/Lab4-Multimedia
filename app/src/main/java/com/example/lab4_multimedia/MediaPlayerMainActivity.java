@@ -61,8 +61,8 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                 cloud_explorer_dialog.dismiss();
                 if (result.getParcelable("single") != null)
                     player.changeCurrentSong(result.getParcelable("single"));
-                else if (result.getParcelable("playlist") != null)
-                    player.createPlaylist(result.getParcelable("playlist"));
+                else if (result.getParcelableArrayList("playlist") != null)
+                    player.createPlaylist(result.getParcelableArrayList("playlist"));
                 else
                     Log.d("CloudSongSelection", "No song selected");
             }

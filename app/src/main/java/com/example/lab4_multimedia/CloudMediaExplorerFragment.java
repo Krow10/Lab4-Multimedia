@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -90,8 +91,10 @@ public class CloudMediaExplorerFragment extends DialogFragment {
         Button shuffle_play = rootView.findViewById(R.id.cloud_shuffle_play_button);
         shuffle_play.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                // TODO : Handle shuffle click
+            public void onClick(View v) { // Not really shuffled since the order of the item is already randomized through asynchronous loading from the cloud
+                Bundle song_selection = new Bundle();
+                song_selection.putParcelableArrayList("playlist", (ArrayList<? extends Parcelable>) cloud_library_adapter.getSongUriList());
+                getParentFragmentManager().setFragmentResult("cloud_songs_selection", song_selection);
             }
         });
 
