@@ -129,7 +129,9 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                     .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
-
+                            song_library.remove(item_position);
+                            notifyItemRemoved(item_position);
+                            notifyItemRangeChanged(item_position, getItemCount());
                             Bundle removed_song = new Bundle();
                             removed_song.putString("remove_cloud_song", song_library.get(item_position).getUrl().toString());
                             child_dialog_fm.setFragmentResult("cloud_song_editing", removed_song);

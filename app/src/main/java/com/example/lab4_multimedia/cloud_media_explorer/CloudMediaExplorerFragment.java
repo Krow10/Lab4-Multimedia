@@ -24,12 +24,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.media_player.MediaPlayerFragment;
+import com.example.lab4_multimedia.media_player.MediaPlayerMainActivity;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.SuccessContinuation;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -40,7 +40,6 @@ import java.util.ArrayList;
 public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public static String TAG = "CloudMediaExplorerDialog";
 
-    private FirebaseStorage firebase_storage;
     private ActivityResultLauncher<Intent> cloud_song_upload_result;
 
     private RecyclerView cloud_library_content;
@@ -52,7 +51,6 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        firebase_storage = FirebaseStorage.getInstance();
         cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager(), getChildFragmentManager());
         refreshCloudLibrary();
 
@@ -70,14 +68,14 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                             .setCustomMetadata("artist", song_artist)
                             .build();
 
-                    firebase_storage.getReferenceFromUrl(song_url).updateMetadata(new_metadata).addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
+                    MediaPlayerMainActivity.firebase_storage.getReferenceFromUrl(song_url).updateMetadata(new_metadata).addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
                         @Override
                         public void onComplete(@NonNull Task<StorageMetadata> task) {
                             Log.d(getTag(), "Update metadata for " + song_url + " successfully : " + song_title + " / " + song_artist);
                         }
                     });
                 } else if (result.getString("remove_cloud_song") != null) {
-                    firebase_storage.getReferenceFromUrl(result.getString("remove_cloud_song")).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                    MediaPlayerMainActivity.firebase_storage.getReferenceFromUrl(result.getString("remove_cloud_song")).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             Log.d(getTag(), "Song " + result.getString("remove_cloud_song") + " successfully deleted !");
@@ -161,13 +159,16 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
 //        super.onResume();
 //    }
 
-    private void uploadSong(Uri local) { // TODO : Add song to beginning of list
+    private void uploadSong(Uri local) { // TODO : Add song to beginning of list + progress bar
         StorageMetadata metadata = new StorageMetadata.Builder()
                 .setCustomMetadata("title", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_TITLE, false))
                 .setCustomMetadata("artist", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_ARTIST, false))
                 .build();
 
-        StorageReference song_ref = firebase_storage.getReference().child("songs/" + local.getLastPathSegment());
+        StorageReference song_ref = MediaPlayerMainActivity.firebase_storage.getReference().child("songs/"
+                + metadata.getCustomMetadata("title") + "_"
+                + metadata.getCustomMetadata("artist") + "_"
+                + System.currentTimeMillis());
         song_ref.putFile(local, metadata).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
@@ -188,17 +189,20 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         }).addOnCompleteListener(new OnCompleteListener<Uri>() {
             @Override
             public void onComplete(@NonNull Task<Uri> task) {
-                if (task.isSuccessful())
-                    cloud_library_adapter.addSong(new CloudSongItem(task.getResult(), metadata.getCustomMetadata("title"), metadata.getCustomMetadata("artist")));
-                else
+                if (task.isSuccessful()) {
+                    CloudSongItem new_song = new CloudSongItem(task.getResult(), metadata.getCustomMetadata("title"), metadata.getCustomMetadata("artist"));
+                    cloud_library_adapter.addSong(new_song);
+                    sendCacheMetadataInfo(new_song);
+                } else {
                     Log.e(getTag(), "Could not retrieve file url after upload !");
+                }
             }
         });
     }
 
     private void refreshCloudLibrary() { // TODO : Sort song from most recent first
         cloud_library_adapter.clearSongs();
-        StorageReference song_directory = firebase_storage.getReference("songs");
+        StorageReference song_directory = MediaPlayerMainActivity.firebase_storage.getReference("songs");
         song_directory.listAll().addOnCompleteListener(new OnCompleteListener<ListResult>() {
             @Override
             public void onComplete(@NonNull Task<ListResult> task) {
@@ -216,6 +220,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                                                 storageMetadata.getCustomMetadata("title"),
                                                 storageMetadata.getCustomMetadata("artist"));
                                         cloud_library_adapter.addSong(new_song);
+                                        sendCacheMetadataInfo(new_song);
                                         Log.d("CloudData", "Added " + new_song.toString());
                                         return null;
                                     }
@@ -230,5 +235,15 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                 }
             }
         });
+    }
+
+    private void sendCacheMetadataInfo(CloudSongItem new_song) {
+        Bundle new_metadata = new Bundle();
+        ArrayList<String> new_song_data = new ArrayList<>();
+        new_song_data.add(new_song.getUrl().toString());
+        new_song_data.add(new_song.getTitle());
+        new_song_data.add(new_song.getArtist());
+        new_metadata.putStringArrayList("metadata", new_song_data);
+        getParentFragmentManager().setFragmentResult("cloud_songs_selection", new_metadata);
     }
 }

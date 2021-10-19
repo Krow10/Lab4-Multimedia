@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentResultListener;
 
 import com.example.lab4_multimedia.R;
+import com.example.lab4_multimedia.cloud_media_explorer.CloudSongItem;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
@@ -31,6 +32,7 @@ import java.util.List;
 
 public class MediaPlayerFragment extends Fragment {
     private static MediaMetadataRetriever mmr;
+    private static HashMap<Uri, CloudSongItem> external_metadata_cache;
     private SimpleExoPlayer player;
     private PlayerNotificationManager player_notif;
 
@@ -68,6 +70,8 @@ public class MediaPlayerFragment extends Fragment {
 
         player_notif = new PlayerNotificationManager.Builder(context, 1337, "1337").build();
         player_notif.setPlayer(player);
+
+        external_metadata_cache = new HashMap<>();
     }
 
     @Override
@@ -154,18 +158,27 @@ public class MediaPlayerFragment extends Fragment {
         player.play();
     }
 
-    // TODO : Investigate very laggy metadata retrieval for external uri => Build cache ?
+    public void cacheMetadata(CloudSongItem song_info) {
+        external_metadata_cache.put(song_info.getUrl(), song_info);
+    }
+
     public static String getSongMetadata(@Nullable Context ctx, Uri uri, int tag, boolean external_uri) {
+        String tag_value = null;
+
         try {
-            if (external_uri)
-                mmr.setDataSource(uri.toString(), new HashMap<String, String>());
-            else
+            if (external_uri) { // mmr.setDataSource(uri.toString(), new HashMap<String, String>());
+                if (tag == MediaMetadataRetriever.METADATA_KEY_TITLE)
+                    tag_value = external_metadata_cache.get(uri).getTitle();
+                else if (tag == MediaMetadataRetriever.METADATA_KEY_ARTIST)
+                    tag_value = external_metadata_cache.get(uri).getArtist();
+            } else {
                 mmr.setDataSource(ctx, uri);
+                tag_value = mmr.extractMetadata(tag);
+            }
         } catch (IllegalArgumentException e) {
             return "Unknown";
         }
 
-        final String tag_value = mmr.extractMetadata(tag);
         return tag_value == null ? "Unknown" : tag_value;
     }
 

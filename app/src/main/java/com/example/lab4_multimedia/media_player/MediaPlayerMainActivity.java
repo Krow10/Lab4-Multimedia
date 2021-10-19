@@ -22,6 +22,7 @@ import androidx.fragment.app.FragmentResultListener;
 import com.example.lab4_multimedia.MainActivity;
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.cloud_media_explorer.CloudMediaExplorerFragment;
+import com.example.lab4_multimedia.cloud_media_explorer.CloudSongItem;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
@@ -32,8 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MediaPlayerMainActivity extends AppCompatActivity {
+    public static FirebaseStorage firebase_storage;
     private FirebaseAuth firebase_auth;
-    private FirebaseStorage firebase_storage;
     private ActivityResultLauncher<Intent> song_library_source_result;
     private CloudMediaExplorerFragment cloud_explorer_dialog;
     private boolean offline_mode;
@@ -43,8 +44,8 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media_player_main);
 
-        firebase_auth = FirebaseAuth.getInstance();
         firebase_storage = FirebaseStorage.getInstance();
+        firebase_auth = FirebaseAuth.getInstance();
         offline_mode = getIntent().getBooleanExtra("offline_mode", false);
 
         PlaylistControlsFragment playlist_controller = new PlaylistControlsFragment();
@@ -61,13 +62,17 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
             @Override
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
                 Log.d("CloudSongSelection", "Received result : " + result);
-                cloud_explorer_dialog.dismiss();
-                if (result.getParcelable("single") != null)
+                if (result.getParcelable("single") != null) {
+                    cloud_explorer_dialog.dismiss();
                     player.changeCurrentSong(result.getParcelable("single"));
-                else if (result.getParcelableArrayList("playlist") != null)
+                } else if (result.getParcelableArrayList("playlist") != null) {
+                    cloud_explorer_dialog.dismiss();
                     player.createPlaylist(result.getParcelableArrayList("playlist"));
-                else
-                    Log.d("CloudSongSelection", "No song selected");
+                } else if (result.getStringArrayList("metadata") != null) {
+                    // String array should be formatted in this order : [Uri, title, artist]
+                    ArrayList<String> song_info = result.getStringArrayList("metadata");
+                    player.cacheMetadata(new CloudSongItem(Uri.parse(song_info.get(0)), song_info.get(1), song_info.get(2)));
+                }
             }
         });
 
