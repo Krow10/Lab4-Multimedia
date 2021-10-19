@@ -7,18 +7,22 @@
 
     <EditText
         android:id="@+id/dialog_edit_metadata_title"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:hint="Set the song's title"/>
+        android:hint="Set the song's title"
+        android:maxLines="1"
+        android:maxLength="200"/>
 
     <EditText
         android:id="@+id/dialog_edit_metadata_artist"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/dialog_edit_metadata_title"
-        android:hint="Set the song's artist"/>
+        android:hint="Set the song's artist"
+        android:maxLines="1"
+        android:maxLength="200"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

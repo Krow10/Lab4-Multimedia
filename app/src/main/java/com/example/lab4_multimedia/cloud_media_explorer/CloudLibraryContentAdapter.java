@@ -16,13 +16,17 @@ import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.lab4_multimedia.R;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.SimpleExoPlayer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibraryContentAdapter.CloudSongViewHolder> {
+    private SimpleExoPlayer background_song_preview_player;
     private ArrayList<CloudSongItem> song_library;
     private FragmentManager parent_dialog_fm;
+    private FragmentManager child_dialog_fm;
 
     public class CloudSongItemListener implements View.OnClickListener {
         private FragmentManager fm;
@@ -57,9 +61,11 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         }
     }
 
-    public CloudLibraryContentAdapter(ArrayList<CloudSongItem> data, FragmentManager fm) {
+    public CloudLibraryContentAdapter(ArrayList<CloudSongItem> data, FragmentManager p_fm, FragmentManager c_fm) {
+        this.background_song_preview_player = new SimpleExoPlayer.Builder(p_fm.findFragmentByTag("CloudMediaExplorerDialog").requireContext()).build();
         this.song_library = data;
-        this.parent_dialog_fm = fm;
+        this.parent_dialog_fm = p_fm;
+        this.child_dialog_fm = c_fm;
     }
 
     @NonNull
@@ -78,7 +84,7 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         holder.song_artist_view.setText(song_library.get(position).getArtist());
         holder.song_edit_metadata.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v) { // TODO : Sanitize title / artist input
                 View edit_dialog_view = LayoutInflater.from(v.getContext()).inflate(R.layout.cloud_song_edit_metadata_dialog, null);
                 EditText dialog_edit_title = edit_dialog_view.findViewById(R.id.dialog_edit_metadata_title);
                 dialog_edit_title.setText(song_library.get(item_position).getTitle());
@@ -86,17 +92,33 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                 dialog_edit_artist.setText(song_library.get(item_position).getArtist());
 
                 AlertDialog.Builder edit_dialog = new AlertDialog.Builder(v.getContext());
-                edit_dialog.setTitle("Playing song in the background to help you fill the details")
+                edit_dialog.setTitle("Playing song in the background to help you fill the details \uD83C\uDFB6")
                     .setView(edit_dialog_view)
                     .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             song_library.get(item_position).setTitle(dialog_edit_title.getText().toString());
-                            song_library.get(item_position).setTitle(dialog_edit_artist.getText().toString());
-                            holder.song_title_view.setText(song_library.get(item_position).getTitle());
-                            holder.song_artist_view.setText(song_library.get(item_position).getArtist());
+                            song_library.get(item_position).setArtist(dialog_edit_artist.getText().toString());
+                            notifyItemChanged(item_position);
+
+                            Bundle new_metadata = new Bundle();
+                            ArrayList<String> new_song_data = new ArrayList<>();
+                            new_song_data.add(song_library.get(item_position).getUrl().toString());
+                            new_song_data.add(song_library.get(item_position).getTitle());
+                            new_song_data.add(song_library.get(item_position).getArtist());
+                            new_metadata.putStringArrayList("update_cloud_song_metadata", new_song_data);
+                            child_dialog_fm.setFragmentResult("cloud_song_editing", new_metadata);
+                        }
+                    }).setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            background_song_preview_player.stop();
                         }
                     }).show();
+
+                background_song_preview_player.setMediaItem(new MediaItem.Builder().setUri(song_library.get(item_position).getUrl()).build());
+                background_song_preview_player.prepare();
+                background_song_preview_player.play();
             }
         });
         holder.song_cloud_remove.setOnClickListener(new View.OnClickListener() {

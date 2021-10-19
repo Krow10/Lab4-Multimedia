@@ -17,6 +17,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -52,8 +53,32 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         super.onCreate(savedInstanceState);
 
         firebase_storage = FirebaseStorage.getInstance();
-        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
+        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager(), getChildFragmentManager());
         refreshCloudLibrary();
+
+        getChildFragmentManager().setFragmentResultListener("cloud_song_editing", this, new FragmentResultListener() {
+            @Override
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+                if (result.getStringArrayList("update_cloud_song_metadata") != null) {
+                    // String array should be formatted in this order : [Uri, title, artist]
+                    final String song_url = result.getStringArrayList("update_cloud_song_metadata").get(0);
+                    final String song_title = result.getStringArrayList("update_cloud_song_metadata").get(1);
+                    final String song_artist = result.getStringArrayList("update_cloud_song_metadata").get(2);
+
+                    StorageMetadata new_metadata = new StorageMetadata.Builder()
+                            .setCustomMetadata("title", song_title)
+                            .setCustomMetadata("artist", song_artist)
+                            .build();
+
+                    firebase_storage.getReferenceFromUrl(song_url).updateMetadata(new_metadata).addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
+                        @Override
+                        public void onComplete(@NonNull Task<StorageMetadata> task) {
+                            Log.d(getTag(), "Update metadata for " + song_url + " successfully : " + song_title + " / " + song_artist);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override
