@@ -102,6 +102,11 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                             player.removeFromQueue(Uri.parse(result.getString("remove_cloud_song")));
                         }
                     });
+                } else if (result.getString("pause_resume_for_preview") != null) {
+                    if (result.getString("pause_resume_for_preview") == "pause")
+                        player.pauseCurrentSong();
+                    else
+                        player.resumeCurrentSong();
                 }
             }
         });

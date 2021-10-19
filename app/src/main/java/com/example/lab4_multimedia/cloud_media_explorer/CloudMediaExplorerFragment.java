@@ -51,11 +51,11 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         super.onCreate(savedInstanceState);
 
         cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
-        refreshCloudLibrary();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        refreshCloudLibrary();
         View rootView = inflater.inflate(R.layout.fragment_cloud_media_explorer, container, false);
 
         cloud_library_content = rootView.findViewById(R.id.cloud_library_content);

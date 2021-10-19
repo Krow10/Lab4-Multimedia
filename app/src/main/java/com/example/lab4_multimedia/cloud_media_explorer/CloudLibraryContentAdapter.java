@@ -111,10 +111,16 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                         @Override
                         public void onDismiss(DialogInterface dialog) {
                             background_song_preview_player.stop();
+                            Bundle resume_playing_song = new Bundle();
+                            resume_playing_song.putString("pause_resume_for_preview", "resume");
+                            parent_dialog_fm.setFragmentResult("cloud_songs_selection", resume_playing_song);
                         }
                     }).show();
 
                 // TODO : Pause main player if is playing for preview, resume after dismiss
+                Bundle pause_playing_song = new Bundle();
+                pause_playing_song.putString("pause_resume_for_preview", "pause");
+                parent_dialog_fm.setFragmentResult("cloud_songs_selection", pause_playing_song);
                 background_song_preview_player.setMediaItem(new MediaItem.Builder().setUri(song_library.get(item_position).getUrl()).build());
                 background_song_preview_player.prepare();
                 background_song_preview_player.play();

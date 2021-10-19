@@ -141,6 +141,16 @@ public class MediaPlayerFragment extends Fragment {
         player.play();
     }
 
+    public void pauseCurrentSong() {
+        if (player.isPlaying())
+            player.pause();
+    }
+
+    public void resumeCurrentSong() {
+        if (player.getCurrentMediaItem() != null && !player.isPlaying())
+            player.play();
+    }
+
     public void createPlaylist(List<Uri> playlist) {
         player.clearMediaItems();
 
