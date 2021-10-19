@@ -124,7 +124,17 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         holder.song_cloud_remove.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                AlertDialog.Builder remove_dialog = new AlertDialog.Builder(v.getContext());
+                remove_dialog.setTitle("Do you want to remove this song from the cloud ? ⚠")
+                    .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
 
+                            Bundle removed_song = new Bundle();
+                            removed_song.putString("remove_cloud_song", song_library.get(item_position).getUrl().toString());
+                            child_dialog_fm.setFragmentResult("cloud_song_editing", removed_song);
+                        }
+                    }).setNegativeButton("CANCEL", null).show();
             }
         });
         holder.itemView.setOnClickListener(new CloudSongItemListener(parent_dialog_fm, song_library.get(position).getUrl()));

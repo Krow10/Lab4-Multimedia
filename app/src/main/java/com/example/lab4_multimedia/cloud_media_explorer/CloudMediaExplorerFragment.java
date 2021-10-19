@@ -58,7 +58,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
 
         getChildFragmentManager().setFragmentResultListener("cloud_song_editing", this, new FragmentResultListener() {
             @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) { // TODO : Add snackbar / progress bar for informing user
                 if (result.getStringArrayList("update_cloud_song_metadata") != null) {
                     // String array should be formatted in this order : [Uri, title, artist]
                     final String song_url = result.getStringArrayList("update_cloud_song_metadata").get(0);
@@ -74,6 +74,13 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                         @Override
                         public void onComplete(@NonNull Task<StorageMetadata> task) {
                             Log.d(getTag(), "Update metadata for " + song_url + " successfully : " + song_title + " / " + song_artist);
+                        }
+                    });
+                } else if (result.getString("remove_cloud_song") != null) {
+                    firebase_storage.getReferenceFromUrl(result.getString("remove_cloud_song")).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Log.d(getTag(), "Song " + result.getString("remove_cloud_song") + " successfully deleted !");
                         }
                     });
                 }
@@ -154,7 +161,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
 //        super.onResume();
 //    }
 
-    private void uploadSong(Uri local) {
+    private void uploadSong(Uri local) { // TODO : Add song to beginning of list
         StorageMetadata metadata = new StorageMetadata.Builder()
                 .setCustomMetadata("title", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_TITLE, false))
                 .setCustomMetadata("artist", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_ARTIST, false))
@@ -189,7 +196,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         });
     }
 
-    private void refreshCloudLibrary() {
+    private void refreshCloudLibrary() { // TODO : Sort song from most recent first
         cloud_library_adapter.clearSongs();
         StorageReference song_directory = firebase_storage.getReference("songs");
         song_directory.listAll().addOnCompleteListener(new OnCompleteListener<ListResult>() {
