@@ -23,18 +23,21 @@ import com.example.lab4_multimedia.MainActivity;
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.cloud_media_explorer.CloudMediaExplorerFragment;
 import com.example.lab4_multimedia.cloud_media_explorer.CloudSongItem;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomappbar.BottomAppBar;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MediaPlayerMainActivity extends AppCompatActivity {
     public static FirebaseStorage firebase_storage;
-    private FirebaseAuth firebase_auth;
+    public static FirebaseAuth firebase_auth;
     private ActivityResultLauncher<Intent> song_library_source_result;
     private CloudMediaExplorerFragment cloud_explorer_dialog;
     private boolean offline_mode;
@@ -72,6 +75,33 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                     // String array should be formatted in this order : [Uri, title, artist]
                     ArrayList<String> song_info = result.getStringArrayList("metadata");
                     player.cacheMetadata(new CloudSongItem(Uri.parse(song_info.get(0)), song_info.get(1), song_info.get(2)));
+                } else if (result.getStringArrayList("update_cloud_song_metadata") != null) {
+                    // String array should be formatted in this order : [Uri, title, artist]
+                    final String song_url = result.getStringArrayList("update_cloud_song_metadata").get(0);
+                    final String song_title = result.getStringArrayList("update_cloud_song_metadata").get(1);
+                    final String song_artist = result.getStringArrayList("update_cloud_song_metadata").get(2);
+
+                    StorageMetadata new_metadata = new StorageMetadata.Builder()
+                            .setCustomMetadata("title", song_title)
+                            .setCustomMetadata("artist", song_artist)
+                            .build();
+
+                    MediaPlayerMainActivity.firebase_storage.getReferenceFromUrl(song_url).updateMetadata(new_metadata).addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
+                        @Override
+                        public void onComplete(@NonNull Task<StorageMetadata> task) {
+                            Log.d(getClass().getName(), "Update metadata for " + song_url + " successfully : " + song_title + " / " + song_artist);
+                            player.cacheMetadata(new CloudSongItem(Uri.parse(song_url), song_title, song_artist));
+                            player.updateItemsMetadata(Uri.parse(song_url));
+                        }
+                    });
+                } else if (result.getString("remove_cloud_song") != null) { // TODO : Investigate 403 errors on song play after remove
+                    MediaPlayerMainActivity.firebase_storage.getReferenceFromUrl(result.getString("remove_cloud_song")).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                        @Override
+                        public void onComplete(@NonNull Task<Void> task) {
+                            Log.d(getClass().getName(), "Song " + result.getString("remove_cloud_song") + " successfully deleted !");
+                            player.removeFromQueue(Uri.parse(result.getString("remove_cloud_song")));
+                        }
+                    });
                 }
             }
         });

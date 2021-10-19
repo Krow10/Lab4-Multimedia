@@ -46,17 +46,12 @@ public class MediaPlayerFragment extends Fragment {
             @Override
             public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
                 if (mediaItem != null) {
-                    Uri song_uri = (Uri) mediaItem.playbackProperties.tag;
-                    String title = getSongMetadata(requireContext(), song_uri, MediaMetadataRetriever.METADATA_KEY_TITLE, isExternalUri(song_uri));
-                    String artist = getSongMetadata(requireContext(), song_uri, MediaMetadataRetriever.METADATA_KEY_ARTIST, isExternalUri(song_uri));
-                    Log.d("mediaMetadataChanged", title + " by " + artist);
+                    updateItemsMetadata((Uri) mediaItem.playbackProperties.tag);
+                } else {
                     Bundle song_info = new Bundle();
-                    song_info.putString("title", title);
-                    song_info.putString("artist", artist);
+                    song_info.putString("title", "Choose a song from your preferred library");
+                    song_info.putString("artist", "Hit the floating button below !");
                     getParentFragmentManager().setFragmentResult("song_info_curr", song_info);
-
-                    if (player.getMediaItemCount() > 1) // Actualize playlist controls info on current song changing
-                        sendPlaylistControlInfo();
                 }
             }
 
@@ -162,11 +157,36 @@ public class MediaPlayerFragment extends Fragment {
         external_metadata_cache.put(song_info.getUrl(), song_info);
     }
 
+    public void updateItemsMetadata(Uri song_uri) {
+        if (player.getCurrentMediaItem().playbackProperties.tag.equals(song_uri)) { // Update metadata if song is currently playing
+            String title = getSongMetadata(requireContext(), song_uri, MediaMetadataRetriever.METADATA_KEY_TITLE, isExternalUri(song_uri));
+            String artist = getSongMetadata(requireContext(), song_uri, MediaMetadataRetriever.METADATA_KEY_ARTIST, isExternalUri(song_uri));
+            Log.d("mediaMetadataChanged", title + " by " + artist);
+            Bundle song_info = new Bundle();
+            song_info.putString("title", title);
+            song_info.putString("artist", artist);
+            getParentFragmentManager().setFragmentResult("song_info_curr", song_info);
+        }
+
+        if (player.getMediaItemCount() > 1) // Actualize playlist controls info on current song changing
+            sendPlaylistControlInfo();
+    }
+
+    public void removeFromQueue(Uri song_uri) {
+        for (int i = 0; i < player.getMediaItemCount(); ++i) {
+            Log.d("RemoveFromQueue", "Current : " + player.getMediaItemAt(i).playbackProperties.tag + " / Searching : " + song_uri.toString());
+            if (player.getMediaItemAt(i).playbackProperties.tag.equals(song_uri)) {
+                player.removeMediaItem(i);
+                break;
+            }
+        }
+    }
+
     public static String getSongMetadata(@Nullable Context ctx, Uri uri, int tag, boolean external_uri) {
         String tag_value = null;
 
         try {
-            if (external_uri) { // mmr.setDataSource(uri.toString(), new HashMap<String, String>());
+            if (external_uri) {
                 if (tag == MediaMetadataRetriever.METADATA_KEY_TITLE)
                     tag_value = external_metadata_cache.get(uri).getTitle();
                 else if (tag == MediaMetadataRetriever.METADATA_KEY_ARTIST)

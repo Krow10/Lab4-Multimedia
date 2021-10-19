@@ -26,7 +26,6 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
     private SimpleExoPlayer background_song_preview_player;
     private ArrayList<CloudSongItem> song_library;
     private FragmentManager parent_dialog_fm;
-    private FragmentManager child_dialog_fm;
 
     public class CloudSongItemListener implements View.OnClickListener {
         private FragmentManager fm;
@@ -61,11 +60,10 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         }
     }
 
-    public CloudLibraryContentAdapter(ArrayList<CloudSongItem> data, FragmentManager p_fm, FragmentManager c_fm) {
+    public CloudLibraryContentAdapter(ArrayList<CloudSongItem> data, FragmentManager p_fm) {
         this.background_song_preview_player = new SimpleExoPlayer.Builder(p_fm.findFragmentByTag("CloudMediaExplorerDialog").requireContext()).build();
         this.song_library = data;
         this.parent_dialog_fm = p_fm;
-        this.child_dialog_fm = c_fm;
     }
 
     @NonNull
@@ -107,7 +105,7 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                             new_song_data.add(song_library.get(item_position).getTitle());
                             new_song_data.add(song_library.get(item_position).getArtist());
                             new_metadata.putStringArrayList("update_cloud_song_metadata", new_song_data);
-                            child_dialog_fm.setFragmentResult("cloud_song_editing", new_metadata);
+                            parent_dialog_fm.setFragmentResult("cloud_songs_selection", new_metadata);
                         }
                     }).setOnDismissListener(new DialogInterface.OnDismissListener() {
                         @Override
@@ -116,6 +114,7 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                         }
                     }).show();
 
+                // TODO : Pause main player if is playing for preview, resume after dismiss
                 background_song_preview_player.setMediaItem(new MediaItem.Builder().setUri(song_library.get(item_position).getUrl()).build());
                 background_song_preview_player.prepare();
                 background_song_preview_player.play();
@@ -129,12 +128,12 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                     .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
+                            Bundle removed_song = new Bundle();
+                            removed_song.putString("remove_cloud_song", song_library.get(item_position).getUrl().toString());
                             song_library.remove(item_position);
                             notifyItemRemoved(item_position);
                             notifyItemRangeChanged(item_position, getItemCount());
-                            Bundle removed_song = new Bundle();
-                            removed_song.putString("remove_cloud_song", song_library.get(item_position).getUrl().toString());
-                            child_dialog_fm.setFragmentResult("cloud_song_editing", removed_song);
+                            parent_dialog_fm.setFragmentResult("cloud_songs_selection", removed_song);
                         }
                     }).setNegativeButton("CANCEL", null).show();
             }

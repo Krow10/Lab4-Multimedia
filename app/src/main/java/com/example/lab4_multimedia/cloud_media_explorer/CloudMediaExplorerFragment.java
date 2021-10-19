@@ -17,7 +17,6 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.fragment.app.FragmentResultListener;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -41,9 +40,9 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public static String TAG = "CloudMediaExplorerDialog";
 
     private ActivityResultLauncher<Intent> cloud_song_upload_result;
-
     private RecyclerView cloud_library_content;
     private CloudLibraryContentAdapter cloud_library_adapter;
+    private final String cloud_song_directory = "songs/" + MediaPlayerMainActivity.firebase_auth.getUid() + "/";
 
     public CloudMediaExplorerFragment() {}
 
@@ -51,39 +50,8 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager(), getChildFragmentManager());
+        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
         refreshCloudLibrary();
-
-        getChildFragmentManager().setFragmentResultListener("cloud_song_editing", this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) { // TODO : Add snackbar / progress bar for informing user
-                if (result.getStringArrayList("update_cloud_song_metadata") != null) {
-                    // String array should be formatted in this order : [Uri, title, artist]
-                    final String song_url = result.getStringArrayList("update_cloud_song_metadata").get(0);
-                    final String song_title = result.getStringArrayList("update_cloud_song_metadata").get(1);
-                    final String song_artist = result.getStringArrayList("update_cloud_song_metadata").get(2);
-
-                    StorageMetadata new_metadata = new StorageMetadata.Builder()
-                            .setCustomMetadata("title", song_title)
-                            .setCustomMetadata("artist", song_artist)
-                            .build();
-
-                    MediaPlayerMainActivity.firebase_storage.getReferenceFromUrl(song_url).updateMetadata(new_metadata).addOnCompleteListener(new OnCompleteListener<StorageMetadata>() {
-                        @Override
-                        public void onComplete(@NonNull Task<StorageMetadata> task) {
-                            Log.d(getTag(), "Update metadata for " + song_url + " successfully : " + song_title + " / " + song_artist);
-                        }
-                    });
-                } else if (result.getString("remove_cloud_song") != null) {
-                    MediaPlayerMainActivity.firebase_storage.getReferenceFromUrl(result.getString("remove_cloud_song")).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-                        @Override
-                        public void onComplete(@NonNull Task<Void> task) {
-                            Log.d(getTag(), "Song " + result.getString("remove_cloud_song") + " successfully deleted !");
-                        }
-                    });
-                }
-            }
-        });
     }
 
     @Override
@@ -121,7 +89,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
             }
         });
 
-        // TODO : Prevent crash when no data => Disable until all data received ?
+        // TODO : Prevent crash when no data => Disable until all data received AND add progress animation on button for metadata retrieval
         Button shuffle_play = rootView.findViewById(R.id.cloud_shuffle_play_button);
         shuffle_play.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -148,28 +116,17 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         return rootView;
     }
 
-//    @Override
-//    public void onResume() {
-//        // Resize the dialog (from @JJ86, https://stackoverflow.com/a/19133940)
-//        DisplayMetrics metrics = getResources().getDisplayMetrics();
-//        int width = metrics.widthPixels;
-//        int height = metrics.heightPixels;
-//        requireDialog().getWindow().setLayout((6 * width)/7, (3 * height)/4);
-//
-//        super.onResume();
-//    }
-
     private void uploadSong(Uri local) { // TODO : Add song to beginning of list + progress bar
         StorageMetadata metadata = new StorageMetadata.Builder()
                 .setCustomMetadata("title", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_TITLE, false))
                 .setCustomMetadata("artist", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_ARTIST, false))
                 .build();
 
-        StorageReference song_ref = MediaPlayerMainActivity.firebase_storage.getReference().child("songs/"
+        StorageReference song_ref = MediaPlayerMainActivity.firebase_storage.getReference().child(cloud_song_directory
                 + metadata.getCustomMetadata("title") + "_"
                 + metadata.getCustomMetadata("artist") + "_"
                 + System.currentTimeMillis());
-        song_ref.putFile(local, metadata).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+        song_ref.putFile(local, metadata).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() { // TODO : Check if song already in cloud ?
             @Override
             public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
                 if (task.isSuccessful()) {
@@ -202,7 +159,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
 
     private void refreshCloudLibrary() { // TODO : Sort song from most recent first
         cloud_library_adapter.clearSongs();
-        StorageReference song_directory = MediaPlayerMainActivity.firebase_storage.getReference("songs");
+        StorageReference song_directory = MediaPlayerMainActivity.firebase_storage.getReference(cloud_song_directory);
         song_directory.listAll().addOnCompleteListener(new OnCompleteListener<ListResult>() {
             @Override
             public void onComplete(@NonNull Task<ListResult> task) {
@@ -231,7 +188,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                         });
                     }
                 } else {
-                    Log.w("Cloud", "Could not retrieve song library : " + task.getException());
+                    Log.w("Cloud", "Could not retrieve song library for user (path = " + cloud_song_directory + ") : " + task.getException());
                 }
             }
         });
