@@ -25,6 +25,14 @@ public class CloudSongItem {
         return song_artist;
     }
 
+    void setTitle(final String title) {
+        this.song_title = title;
+    }
+
+    void setArtist(final String artist) {
+        this.song_artist = artist;
+    }
+
     @Override
     public String toString() {
         return "CloudSongItem{" +

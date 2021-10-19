@@ -1,11 +1,14 @@
 package com.example.lab4_multimedia.cloud_media_explorer;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -39,22 +42,18 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
     }
 
     public class CloudSongViewHolder extends RecyclerView.ViewHolder {
-        private TextView song_title_view;
-        private TextView song_artist_view;
+        public TextView song_title_view;
+        public TextView song_artist_view;
+        public ImageButton song_edit_metadata;
+        public ImageButton song_cloud_remove;
 
         public CloudSongViewHolder(@NonNull View itemView) {
             super(itemView);
 
             song_title_view = itemView.findViewById(R.id.cloud_song_title);
             song_artist_view = itemView.findViewById(R.id.cloud_song_artist);
-        }
-
-        public TextView getSongTitleView() {
-            return song_title_view;
-        }
-
-        public TextView getSongArtistView() {
-            return song_artist_view;
+            song_edit_metadata = itemView.findViewById(R.id.cloud_song_edit_metadata_button);
+            song_cloud_remove = itemView.findViewById(R.id.cloud_song_remove_cloud_song_button);
         }
     }
 
@@ -72,9 +71,40 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
 
     @Override
     public void onBindViewHolder(@NonNull CloudSongViewHolder holder, int position) {
-        Log.d("BindViewHolder", "Title : " + song_library.get(position).getTitle() + " / Artist : " + song_library.get(position).getArtist());
-        holder.getSongTitleView().setText(song_library.get(position).getTitle());
-        holder.getSongArtistView().setText(song_library.get(position).getArtist());
+        // Prevent lint warning about "position" not relevant outside the body of this function (dialog onClick handler)
+        final int item_position = holder.getBindingAdapterPosition();
+
+        holder.song_title_view.setText(song_library.get(position).getTitle());
+        holder.song_artist_view.setText(song_library.get(position).getArtist());
+        holder.song_edit_metadata.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                View edit_dialog_view = LayoutInflater.from(v.getContext()).inflate(R.layout.cloud_song_edit_metadata_dialog, null);
+                EditText dialog_edit_title = edit_dialog_view.findViewById(R.id.dialog_edit_metadata_title);
+                dialog_edit_title.setText(song_library.get(item_position).getTitle());
+                EditText dialog_edit_artist = edit_dialog_view.findViewById(R.id.dialog_edit_metadata_artist);
+                dialog_edit_artist.setText(song_library.get(item_position).getArtist());
+
+                AlertDialog.Builder edit_dialog = new AlertDialog.Builder(v.getContext());
+                edit_dialog.setTitle("Playing song in the background to help you fill the details")
+                    .setView(edit_dialog_view)
+                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            song_library.get(item_position).setTitle(dialog_edit_title.getText().toString());
+                            song_library.get(item_position).setTitle(dialog_edit_artist.getText().toString());
+                            holder.song_title_view.setText(song_library.get(item_position).getTitle());
+                            holder.song_artist_view.setText(song_library.get(item_position).getArtist());
+                        }
+                    }).show();
+            }
+        });
+        holder.song_cloud_remove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         holder.itemView.setOnClickListener(new CloudSongItemListener(parent_dialog_fm, song_library.get(position).getUrl()));
     }
 

@@ -6,7 +6,6 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +17,7 @@ import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.fragment.app.DialogFragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -28,6 +27,7 @@ import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.SuccessContinuation;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageMetadata;
@@ -36,7 +36,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 
-public class CloudMediaExplorerFragment extends DialogFragment {
+public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public static String TAG = "CloudMediaExplorerDialog";
 
     private FirebaseStorage firebase_storage;
@@ -63,6 +63,7 @@ public class CloudMediaExplorerFragment extends DialogFragment {
         cloud_library_content = rootView.findViewById(R.id.cloud_library_content);
         cloud_library_content.setLayoutManager(new LinearLayoutManager(getContext()));
         cloud_library_content.setAdapter(cloud_library_adapter);
+        cloud_library_content.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
 
         cloud_song_upload_result = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
             @Override
@@ -117,16 +118,16 @@ public class CloudMediaExplorerFragment extends DialogFragment {
         return rootView;
     }
 
-    @Override
-    public void onResume() {
-        // Resize the dialog (from @JJ86, https://stackoverflow.com/a/19133940)
-        DisplayMetrics metrics = getResources().getDisplayMetrics();
-        int width = metrics.widthPixels;
-        int height = metrics.heightPixels;
-        requireDialog().getWindow().setLayout((6 * width)/7, (3 * height)/4);
-
-        super.onResume();
-    }
+//    @Override
+//    public void onResume() {
+//        // Resize the dialog (from @JJ86, https://stackoverflow.com/a/19133940)
+//        DisplayMetrics metrics = getResources().getDisplayMetrics();
+//        int width = metrics.widthPixels;
+//        int height = metrics.heightPixels;
+//        requireDialog().getWindow().setLayout((6 * width)/7, (3 * height)/4);
+//
+//        super.onResume();
+//    }
 
     private void uploadSong(Uri local) {
         StorageMetadata metadata = new StorageMetadata.Builder()
