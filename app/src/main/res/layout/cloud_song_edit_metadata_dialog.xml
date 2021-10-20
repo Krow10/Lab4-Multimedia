@@ -11,9 +11,11 @@
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:hint="Set the song's title"
+        android:hint="@string/edit_metadata_title_hint"
         android:maxLines="1"
-        android:maxLength="200"/>
+        android:maxLength="200"
+        android:inputType="text"
+        android:importantForAutofill="no" />
 
     <EditText
         android:id="@+id/dialog_edit_metadata_artist"
@@ -21,8 +23,10 @@
         android:layout_height="wrap_content"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/dialog_edit_metadata_title"
-        android:hint="Set the song's artist"
+        android:hint="@string/edit_metadata_artist_hint"
         android:maxLines="1"
-        android:maxLength="200"/>
+        android:maxLength="200"
+        android:inputType="text"
+        android:importantForAutofill="no" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

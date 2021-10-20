@@ -27,7 +27,8 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
-            android:background="@drawable/ic_baseline_chevron_left"/>
+            android:background="@drawable/ic_baseline_chevron_left"
+            android:contentDescription="@string/exo_controls_previous_description" />
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/playlist_control_previous_info"
@@ -88,7 +89,8 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            android:background="@drawable/ic_baseline_chevron_right"/>
+            android:background="@drawable/ic_baseline_chevron_right"
+            android:contentDescription="@string/exo_controls_next_description" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

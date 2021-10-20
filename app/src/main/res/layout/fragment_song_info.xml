@@ -31,7 +31,8 @@
         app:layout_constraintDimensionRatio="1"
         android:layout_marginBottom="16dp"
         android:src="@drawable/ic_baseline_music_note_24"
-        android:background="@drawable/bg_song_info_cover"/>
+        android:background="@drawable/bg_song_info_cover"
+        android:contentDescription="@string/song_info_cover_content_desc" />
 
     <TextView
         android:id="@+id/song_info_title"
@@ -41,7 +42,7 @@
         app:layout_constraintBottom_toTopOf="@id/song_info_artist"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:text="Choose a song from your preferred library"
+        android:text="@string/empty_title_hint"
         android:textAlignment="center"
         android:maxLines="1"
         android:ellipsize="end"/>
@@ -53,7 +54,7 @@
         app:layout_constraintTop_toBottomOf="@id/song_info_title"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        android:text="Hit the floating button below !"
+        android:text="@string/empty_artist_hint"
         android:textAlignment="center"
         android:maxLines="1"
         android:ellipsize="end"/>

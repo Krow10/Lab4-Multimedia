@@ -17,7 +17,7 @@
 
     <item
         android:id="@+id/action_sign_out"
-        android:title="Sign out"
-        android:contentDescription="Sign out of your cloud account"
+        android:title="@string/sign_out"
+        android:contentDescription="@string/sign_out_content_desc"
         app:showAsAction="never"/>
 </menu>

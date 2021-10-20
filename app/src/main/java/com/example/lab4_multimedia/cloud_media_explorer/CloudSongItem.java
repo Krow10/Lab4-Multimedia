@@ -2,8 +2,10 @@ package com.example.lab4_multimedia.cloud_media_explorer;
 
 import android.net.Uri;
 
+import androidx.annotation.NonNull;
+
 public class CloudSongItem {
-    private Uri song_url;
+    private final Uri song_url;
     private String song_title;
     private String song_artist;
 
@@ -33,6 +35,7 @@ public class CloudSongItem {
         this.song_artist = artist;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "CloudSongItem{" +

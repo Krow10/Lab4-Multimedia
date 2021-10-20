@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,11 +19,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.media_player.MediaPlayerMainActivity;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.appbar.MaterialToolbar;
-import com.google.firebase.auth.AuthResult;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.Objects;
 
 public class SignInActivity extends AppCompatActivity {
     private FirebaseAuth firebase_auth;
@@ -36,10 +35,10 @@ public class SignInActivity extends AppCompatActivity {
 
         firebase_auth = FirebaseAuth.getInstance();
 
-        MaterialToolbar navigation_bar = (MaterialToolbar) findViewById(R.id.sign_in_navigation_bar);
+        MaterialToolbar navigation_bar = findViewById(R.id.sign_in_navigation_bar);
         setSupportActionBar(navigation_bar);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         // From @dira (https://stackoverflow.com/a/10697453)
@@ -67,28 +66,22 @@ public class SignInActivity extends AppCompatActivity {
         sign_in_redirect.setHighlightColor(Color.TRANSPARENT);
 
         Button sign_in_action = findViewById(R.id.sign_in_action_button);
-        sign_in_action.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                final String email = ((EditText)(findViewById(R.id.sign_in_email))).getText().toString();
-                final String password = ((EditText)(findViewById(R.id.sign_in_password))).getText().toString();
+        sign_in_action.setOnClickListener(v -> {
+            final String email = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_in_email))).getText()).toString();
+            final String password = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_in_password))).getText()).toString();
 
-                firebase_auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            Log.d("SignIn", "User signed in : " + email);
-                            Intent start_media_player = new Intent(SignInActivity.this, MediaPlayerMainActivity.class);
-                            start_media_player.putExtra("signed_in_has", firebase_auth.getCurrentUser().getEmail());
-                            start_media_player.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                            startActivity(start_media_player);
-                            finish();
-                        } else {
-                            Log.w("SignIn", "Failed : " + task.getException());
-                        }
-                    }
-                });
-            }
+            firebase_auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Log.d("SignIn", "User signed in : " + email);
+                    Intent start_media_player = new Intent(SignInActivity.this, MediaPlayerMainActivity.class);
+                    start_media_player.putExtra("signed_in_has", Objects.requireNonNull(firebase_auth.getCurrentUser()).getEmail());
+                    start_media_player.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(start_media_player);
+                    finish();
+                } else {
+                    Log.w("SignIn", "Failed : " + task.getException());
+                }
+            });
         });
     }
 
