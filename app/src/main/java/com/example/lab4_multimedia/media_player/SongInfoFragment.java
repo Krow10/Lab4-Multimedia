@@ -1,4 +1,4 @@
-package com.example.lab4_multimedia;
+package com.example.lab4_multimedia.media_player;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -7,9 +7,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentResultListener;
+
+import com.example.lab4_multimedia.R;
 
 public class SongInfoFragment extends Fragment {
     public enum RegisterFor {
@@ -18,8 +18,8 @@ public class SongInfoFragment extends Fragment {
         SONG_INFO_NEXT
     }
 
-    private RegisterFor register_for;
-    private boolean show_cover;
+    private final RegisterFor register_for;
+    private final boolean show_cover;
     private ImageView cover;
     private TextView title;
     private TextView artist;
@@ -35,20 +35,16 @@ public class SongInfoFragment extends Fragment {
 
         String request_key;
 
-        if (register_for == RegisterFor.SONG_INFO_PREVIOUS) {
+        if (register_for == RegisterFor.SONG_INFO_PREVIOUS)
             request_key = "song_info_prev";
-        } else if (register_for == RegisterFor.SONG_INFO_CURRENT) {
+        else if (register_for == RegisterFor.SONG_INFO_CURRENT)
             request_key = "song_info_curr";
-        } else {
+        else
             request_key = "song_info_next";
-        }
 
-        getParentFragmentManager().setFragmentResultListener(request_key, this, new FragmentResultListener() {
-            @Override
-            public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-                title.setText(result.getString("title"));
-                artist.setText(result.getString("artist"));
-            }
+        getParentFragmentManager().setFragmentResultListener(request_key, this, (requestKey, result) -> {
+            title.setText(result.getString("title"));
+            artist.setText(result.getString("artist"));
         });
     }
 

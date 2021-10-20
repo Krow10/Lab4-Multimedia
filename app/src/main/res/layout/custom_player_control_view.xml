@@ -42,7 +42,8 @@
         app:layout_constraintBottom_toBottomOf="@id/play_pause_container"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/exo_rew"
-        style="@style/ExoStyledControls.Button.Bottom.RepeatToggle"/>
+        style="@style/ExoStyledControls.Button.Bottom.RepeatToggle"
+        android:contentDescription="@string/exo_controls_repeat_all_description" />
 
     <ImageButton
         android:id="@id/exo_rew"
@@ -53,7 +54,8 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/play_pause_container"
         app:layout_constraintHorizontal_chainStyle="packed"
-        style="@style/ExoMediaButton.Rewind"/>
+        style="@style/ExoMediaButton.Rewind"
+        android:contentDescription="@string/exo_controls_rewind_description" />
 
     <FrameLayout
         android:id="@+id/play_pause_container"
@@ -70,14 +72,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="@style/ExoMediaButton.Play"
-            app:tint="?colorSecondary"/>
+            app:tint="?colorSecondary"
+            android:contentDescription="@string/exo_controls_play_description" />
 
         <ImageButton
             android:id="@id/exo_pause"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             style="@style/ExoMediaButton.Pause"
-            app:tint="?colorSecondary"/>
+            app:tint="?colorSecondary"
+            android:contentDescription="@string/exo_controls_pause_description" />
 
     </FrameLayout>
 
@@ -90,7 +94,8 @@
         app:layout_constraintLeft_toRightOf="@id/play_pause_container"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintHorizontal_chainStyle="packed"
-        style="@style/ExoMediaButton.FastForward"/>
+        style="@style/ExoMediaButton.FastForward"
+        android:contentDescription="@string/exo_controls_fastforward_description" />
 
     <ImageButton
         android:id="@+id/empty"
@@ -100,6 +105,7 @@
         app:layout_constraintBottom_toBottomOf="@id/play_pause_container"
         app:layout_constraintLeft_toRightOf="@id/exo_ffwd"
         app:layout_constraintRight_toRightOf="parent"
-        android:background="@null"/>
+        android:background="@null"
+        android:contentDescription="@string/empty_content_desc" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

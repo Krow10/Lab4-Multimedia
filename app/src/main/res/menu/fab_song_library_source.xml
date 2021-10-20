@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/source_local_device"
-        android:title="Local device"/>
+        android:title="@string/library_local_device"/>
 
     <item android:id="@+id/source_cloud"
-        android:title="Cloud"/>
+        android:title="@string/library_cloud"/>
 </menu>
