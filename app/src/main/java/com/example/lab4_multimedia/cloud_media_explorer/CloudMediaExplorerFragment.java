@@ -1,7 +1,12 @@
 package com.example.lab4_multimedia.cloud_media_explorer;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.drawable.ClipDrawable;
+import android.graphics.drawable.LayerDrawable;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,6 +15,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -26,7 +32,9 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public static final String TAG = "CloudMediaExplorerDialog";
@@ -34,6 +42,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     private ActivityResultLauncher<Intent> cloud_song_upload_result;
     private CloudLibraryContentAdapter cloud_library_adapter;
     private final String cloud_song_directory = "songs/" + MainActivity.firebase_auth.getUid() + "/";
+    private Button shuffle_play_button;
 
     public CloudMediaExplorerFragment() {}
 
@@ -42,7 +51,6 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         super.onCreate(savedInstanceState);
 
         cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
-        refreshCloudLibrary();
     }
 
     @Override
@@ -71,16 +79,15 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
             }
         });
 
-        // TODO : Prevent crash when no data => Disable until all data received AND add progress animation on button for metadata retrieval
-        Button shuffle_play = rootView.findViewById(R.id.cloud_shuffle_play_button);
-        shuffle_play.setOnClickListener(v -> { // No need to shuffle since the order of the item is already randomized through asynchronous loading from the cloud
+        shuffle_play_button = rootView.findViewById(R.id.cloud_shuffle_play_button);
+        shuffle_play_button.setOnClickListener(v -> { // No need to shuffle since the order of the item is already randomized through asynchronous loading from the cloud
             Bundle song_selection = new Bundle();
             song_selection.putParcelableArrayList("playlist_select", (ArrayList<? extends Parcelable>) cloud_library_adapter.getSongUriList());
             getParentFragmentManager().setFragmentResult("cloud_explorer_results", song_selection);
         });
 
-        Button add_songs = rootView.findViewById(R.id.cloud_add_songs_button);
-        add_songs.setOnClickListener(v -> {
+        Button add_songs_button = rootView.findViewById(R.id.cloud_add_songs_button);
+        add_songs_button.setOnClickListener(v -> {
             Intent source_intent = new Intent();
             source_intent.setType("audio/*");
             source_intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -89,6 +96,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
             cloud_song_upload_result.launch(source_intent);
         });
 
+        refreshCloudLibrary();
         return rootView;
     }
 
@@ -127,19 +135,44 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
 
     @SuppressWarnings("ConstantConditions")
     private void refreshCloudLibrary() { // TODO : Sort song from most recent first
+        ClipDrawable shuffle_play_background_progress = (ClipDrawable) ((LayerDrawable)(shuffle_play_button.getBackground())).findDrawableByLayerId(R.id.clip_drawable);
+        ObjectAnimator shuffle_play_progress_anim = ObjectAnimator.ofInt(shuffle_play_background_progress, "level", 0, 0);
+        shuffle_play_progress_anim.setDuration(getResources().getInteger(R.integer.cloud_songs_loading_progress_speed));
+        shuffle_play_progress_anim.setInterpolator(new DecelerateInterpolator());
+
         cloud_library_adapter.clearSongs();
+        shuffle_play_button.setEnabled(false);
+        shuffle_play_background_progress.setLevel(0);
         StorageReference song_directory = MainActivity.firebase_storage.getReference(cloud_song_directory);
         song_directory.listAll().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
+                List<StorageReference> cloud_song_items = task.getResult().getItems();
+                final int cloud_songs_total = cloud_song_items.size();
+                AtomicInteger cloud_songs_count = new AtomicInteger();
+
+                shuffle_play_progress_anim.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        super.onAnimationEnd(animation);
+
+                        if (cloud_songs_count.get() == cloud_songs_total)
+                            shuffle_play_button.setEnabled(true);
+                    }
+                });
+
                 for (StorageReference song : task.getResult().getItems()) {
                     song.getMetadata().onSuccessTask(storageMetadata -> {
                         song.getDownloadUrl().onSuccessTask(uri -> {
+                            cloud_songs_count.addAndGet(1);
+                            shuffle_play_progress_anim.setIntValues(shuffle_play_background_progress.getLevel(), 10000*(cloud_songs_count.get() + 1)/cloud_songs_total);
+                            shuffle_play_progress_anim.start();
+
                             CloudSongItem new_song = new CloudSongItem(uri,
                                     storageMetadata.getCustomMetadata("title"),
                                     storageMetadata.getCustomMetadata("artist"));
                             cloud_library_adapter.addSong(new_song);
                             sendCacheMetadataInfo(new_song);
-                            Log.d("CloudData", "Added " + new_song.toString());
+                            Log.d("CloudData", "[" + cloud_songs_count.get() + " / " + cloud_songs_total + "] Added " + new_song.toString());
                             return null;
                         });
 

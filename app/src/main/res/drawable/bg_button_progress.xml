@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <padding android:top="6dp" android:bottom="6dp"/>
+            <corners android:radius="4dp"/>
+            <solid android:color="@android:color/transparent" />
+        </shape>
+    </item>
+    <item android:id="@+id/clip_drawable">
+        <clip
+            android:clipOrientation="horizontal"
+            android:gravity="start">
+            <shape
+                android:shape="rectangle">
+                <padding android:top="6dp" android:bottom="6dp"/>
+                <corners android:radius="4dp"/>
+                <solid android:color="?colorPrimary" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

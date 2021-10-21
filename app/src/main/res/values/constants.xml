@@ -4,4 +4,5 @@
     <dimen name="forward_rewind_icon_size" tools:ignore="UnusedResources">36dp</dimen>
     <dimen name="playlist_control_icon_size">24dp</dimen>
     <dimen name="rounded_rectangle_radius">36dp</dimen>
+    <integer name="cloud_songs_loading_progress_speed">250</integer>
 </resources>
