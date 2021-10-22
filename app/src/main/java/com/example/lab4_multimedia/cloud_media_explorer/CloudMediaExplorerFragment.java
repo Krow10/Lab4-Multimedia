@@ -2,9 +2,12 @@ package com.example.lab4_multimedia.cloud_media_explorer;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Color;
 import android.graphics.drawable.ClipDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.media.MediaMetadataRetriever;
@@ -20,6 +23,8 @@ import android.widget.Button;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,12 +33,14 @@ import com.example.lab4_multimedia.MainActivity;
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.media_player.MediaPlayerFragment;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.android.material.color.MaterialColors;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
@@ -140,15 +147,29 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         shuffle_play_progress_anim.setDuration(getResources().getInteger(R.integer.cloud_songs_loading_progress_speed));
         shuffle_play_progress_anim.setInterpolator(new DecelerateInterpolator());
 
+        ValueAnimator shuffle_text_color_anim = ValueAnimator.ofObject(new ArgbEvaluator(),
+                ResourcesCompat.getColor(getResources(), R.color.disabled, null),
+                MaterialColors.getColor(requireContext(), R.attr.colorOnPrimary, Color.WHITE));
+        shuffle_text_color_anim.setDuration(getResources().getInteger(R.integer.cloud_songs_text_color_swap_speed));
+        shuffle_text_color_anim.setInterpolator(new FastOutSlowInInterpolator());
+        shuffle_text_color_anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                shuffle_play_button.setTextColor((int) animation.getAnimatedValue());
+            }
+        });
+
         cloud_library_adapter.clearSongs();
         shuffle_play_button.setEnabled(false);
         shuffle_play_background_progress.setLevel(0);
+
         StorageReference song_directory = MainActivity.firebase_storage.getReference(cloud_song_directory);
         song_directory.listAll().addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 List<StorageReference> cloud_song_items = task.getResult().getItems();
                 final int cloud_songs_total = cloud_song_items.size();
                 AtomicInteger cloud_songs_count = new AtomicInteger();
+                AtomicBoolean swap_text_color = new AtomicBoolean(true);
 
                 shuffle_play_progress_anim.addListener(new AnimatorListenerAdapter() {
                     @Override
@@ -163,6 +184,11 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                 for (StorageReference song : task.getResult().getItems()) {
                     song.getMetadata().onSuccessTask(storageMetadata -> {
                         song.getDownloadUrl().onSuccessTask(uri -> {
+                            if (swap_text_color.get()) {
+                                shuffle_text_color_anim.start();
+                                swap_text_color.set(false);
+                            }
+
                             cloud_songs_count.addAndGet(1);
                             shuffle_play_progress_anim.setIntValues(shuffle_play_background_progress.getLevel(), 10000*(cloud_songs_count.get() + 1)/cloud_songs_total);
                             shuffle_play_progress_anim.start();

@@ -5,4 +5,5 @@
     <dimen name="playlist_control_icon_size">24dp</dimen>
     <dimen name="rounded_rectangle_radius">36dp</dimen>
     <integer name="cloud_songs_loading_progress_speed">250</integer>
+    <integer name="cloud_songs_text_color_swap_speed">250</integer>
 </resources>
