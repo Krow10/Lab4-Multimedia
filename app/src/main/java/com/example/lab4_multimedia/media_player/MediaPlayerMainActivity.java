@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuInflater;
+import android.view.View;
 import android.widget.PopupMenu;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -61,9 +62,9 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
             public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
                 Uri single_song_select = result.getParcelable("single_song_select");
                 List<Uri> playlist_select = result.getParcelableArrayList("playlist_select");
-                ArrayList<String> cloud_song_cache_metadata = result.getStringArrayList("cloud_song_cache_metadata");
-                ArrayList<String> cloud_song_update_metadata = result.getStringArrayList("cloud_song_update_metadata");
-                String cloud_song_remove = result.getString("cloud_song_remove");
+                CloudSongItem cloud_song_cache_metadata = result.getParcelable("cloud_song_cache_metadata");
+                CloudSongItem cloud_song_update_metadata = result.getParcelable("cloud_song_update_metadata");
+                CloudSongItem cloud_song_remove = result.getParcelable("cloud_song_remove");
                 String change_player_state_for_preview = result.getString("change_player_state_for_preview");
                 ArrayList<CloudSongItem> uploading_song_items_backup = result.getParcelableArrayList("uploading_song_items_backup");
 
@@ -75,14 +76,14 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                     player.createPlaylist(playlist_select);
                 } else if (cloud_song_cache_metadata != null) {
                     // String array should be formatted in this order : [Uri, title, artist]
-                    player.cacheMetadata(new CloudSongItem(Uri.parse(cloud_song_cache_metadata.get(0)),
-                            cloud_song_cache_metadata.get(1),
-                            cloud_song_cache_metadata.get(2)));
+                    player.cacheMetadata(new CloudSongItem(cloud_song_cache_metadata.getUrl(),
+                            cloud_song_cache_metadata.getTitle(),
+                            cloud_song_cache_metadata.getArtist()));
                 } else if (cloud_song_update_metadata != null) {
                     // String array should be formatted in this order : [Uri, title, artist]
-                    final String song_url = cloud_song_update_metadata.get(0);
-                    final String song_title = cloud_song_update_metadata.get(1);
-                    final String song_artist = cloud_song_update_metadata.get(2);
+                    final String song_url = cloud_song_update_metadata.getUrl().toString();
+                    final String song_title = cloud_song_update_metadata.getTitle();
+                    final String song_artist = cloud_song_update_metadata.getArtist();
 
                     StorageMetadata new_metadata = new StorageMetadata.Builder()
                             .setCustomMetadata("title", song_title)
@@ -95,14 +96,18 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                             Log.d(getClass().getName(), "Update metadata for " + song_url + " successfully : " + song_title + " / " + song_artist);
                             player.cacheMetadata(new CloudSongItem(Uri.parse(song_url), song_title, song_artist));
                             player.updateItemsMetadata(Uri.parse(song_url));
+                            showSnackbar("✅ Successfully updated metadata for \"" + song_title + " - " + song_artist + "\"",
+                                    cloud_explorer_dialog.requireView());
                         }
                     });
                 } else if (cloud_song_remove != null) {
-                    MainActivity.firebase_storage.getReferenceFromUrl(cloud_song_remove).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                    MainActivity.firebase_storage.getReferenceFromUrl(cloud_song_remove.getUrl().toString()).delete().addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             Log.d(getClass().getName(), "Song " + cloud_song_remove + " successfully deleted !");
-                            player.removeFromQueue(Uri.parse(cloud_song_remove));
+                            player.removeFromQueue(cloud_song_remove.getUrl());
+                            showSnackbar("✅ Successfully deleted \"" + cloud_song_remove.getTitle() + " - " + cloud_song_remove.getArtist() + "\"",
+                                    cloud_explorer_dialog.requireView());
                         }
                     });
                 } else if (change_player_state_for_preview != null) {
@@ -131,9 +136,7 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
 
                                 player.createPlaylist(new_playlist);
                                 // Snackbar automatically dismiss when action is clicked
-                                Snackbar.make(findViewById(R.id.song_library_fab), "Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", Snackbar.LENGTH_LONG)
-                                        .setAnchorView(findViewById(R.id.song_library_fab))
-                                        .setAction("Dismiss", v -> {}).show();
+                                showSnackbar("Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", findViewById(R.id.song_library_fab));
                             } else {
                                 Log.d("NewSong", data.getData().toString());
                                 player.changeCurrentSong(data.getData());
@@ -196,9 +199,7 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
 
         song_library_fab.post(() -> {
             if (getIntent().hasExtra("signed_in_has"))
-                Snackbar.make(findViewById(android.R.id.content), "Welcome back " + getIntent().getStringExtra("signed_in_has") + " !", Snackbar.LENGTH_LONG)
-                        .setAnchorView(findViewById(R.id.song_library_fab))
-                        .show();
+                showSnackbar("Welcome back " + getIntent().getStringExtra("signed_in_has") + " !", findViewById(R.id.song_library_fab));
         }); // Wait for FAB to be ready before anchoring the snackbar's view
     }
 
@@ -206,5 +207,11 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
     protected void onDestroy() {
         ((NotificationManager)(getSystemService(Context.NOTIFICATION_SERVICE))).cancelAll();
         super.onDestroy();
+    }
+
+    private void showSnackbar(final String text, View anchor) {
+        Snackbar.make(anchor, text, Snackbar.LENGTH_LONG)
+                .setAnchorView(anchor)
+                .setAction("Dismiss", v -> {}).show();
     }
 }

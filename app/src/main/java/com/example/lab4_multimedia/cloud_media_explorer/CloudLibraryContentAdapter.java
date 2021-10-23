@@ -104,13 +104,8 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                     song_item.setArtist(dialog_edit_artist.getText().toString());
                     notifyItemChanged(item_position);
 
-                    ArrayList<String> new_song_data = new ArrayList<>();
-                    new_song_data.add(song_item.getUrl().toString());
-                    new_song_data.add(song_item.getTitle());
-                    new_song_data.add(song_item.getArtist());
-
                     Bundle new_metadata = new Bundle();
-                    new_metadata.putStringArrayList("cloud_song_update_metadata", new_song_data);
+                    new_metadata.putParcelable("cloud_song_update_metadata", song_item);
                     parent_dialog_fm.setFragmentResult("cloud_explorer_results", new_metadata);
                 }).setOnDismissListener(dialog -> {
                     background_song_preview_player.stop();
@@ -133,7 +128,7 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
             remove_dialog.setTitle("Do you want to remove this song from the cloud ? ⚠")
                 .setPositiveButton("YES", (dialog, which) -> {
                     Bundle removed_song = new Bundle();
-                    removed_song.putString("cloud_song_remove", song_item.getUrl().toString());
+                    removed_song.putParcelable("cloud_song_remove", song_item);
 
                     song_library.remove(item_position);
                     notifyItemRemoved(item_position);
@@ -206,13 +201,5 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         int insert_index = addToTop ? 0 : getItemCount();
         song_library.add(insert_index, new_song);
         notifyItemInserted(insert_index);
-    }
-
-    public void clearSongs() {
-        int size = getItemCount();
-        for (int i = 0; i < size; ++i) {
-            song_library.remove(0);
-            notifyItemRemoved(0);
-        }
     }
 }

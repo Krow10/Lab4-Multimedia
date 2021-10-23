@@ -189,12 +189,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                 MaterialColors.getColor(requireContext(), R.attr.colorOnPrimary, Color.WHITE));
         shuffle_text_color_anim.setDuration(getResources().getInteger(R.integer.cloud_songs_text_color_swap_speed));
         shuffle_text_color_anim.setInterpolator(new FastOutSlowInInterpolator());
-        shuffle_text_color_anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                shuffle_play_button.setTextColor((int) animation.getAnimatedValue());
-            }
-        });
+        shuffle_text_color_anim.addUpdateListener(animation -> shuffle_play_button.setTextColor((int) animation.getAnimatedValue()));
 
         shuffle_play_button.setEnabled(false);
         shuffle_play_background_progress.setLevel(0);
@@ -248,13 +243,12 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     }
 
     private void sendCacheMetadataInfo(CloudSongItem new_song) {
-        ArrayList<String> new_song_data = new ArrayList<>();
-        new_song_data.add(new_song.getUrl().toString());
-        new_song_data.add(new_song.getTitle());
-        new_song_data.add(new_song.getArtist());
-
-        Bundle new_metadata = new Bundle();
-        new_metadata.putStringArrayList("cloud_song_cache_metadata", new_song_data);
-        getParentFragmentManager().setFragmentResult("cloud_explorer_results", new_metadata);
+        try {
+            Bundle new_metadata = new Bundle();
+            new_metadata.putParcelable("cloud_song_cache_metadata", new_song);
+            getParentFragmentManager().setFragmentResult("cloud_explorer_results", new_metadata);
+        } catch (IllegalStateException e) {
+            Log.e(getTag(), "Could not cache metadata for " + new_song + " : " + e.getMessage());
+        }
     }
 }
