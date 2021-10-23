@@ -5,6 +5,6 @@
     </style>
 
     <style name="bottomSheetStyleWrapper" parent="Widget.Design.BottomSheet.Modal">
-        <item name="behavior_peekHeight">112dp</item>
+        <item name="behavior_peekHeight">106dp</item>
     </style>
 </resources>

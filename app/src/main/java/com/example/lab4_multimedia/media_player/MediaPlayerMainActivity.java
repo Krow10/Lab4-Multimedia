@@ -33,6 +33,7 @@ import java.util.List;
 public class MediaPlayerMainActivity extends AppCompatActivity {
     private ActivityResultLauncher<Intent> song_library_source_result;
     private CloudMediaExplorerFragment cloud_explorer_dialog;
+    private ArrayList<CloudSongItem> song_items_backup;
     private boolean offline_mode;
 
     @Override
@@ -40,6 +41,8 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media_player_main);
 
+        cloud_explorer_dialog = new CloudMediaExplorerFragment();
+        song_items_backup = new ArrayList<>();
         offline_mode = getIntent().getBooleanExtra("offline_mode", false);
 
         PlaylistControlsFragment playlist_controller = new PlaylistControlsFragment();
@@ -61,6 +64,7 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                 ArrayList<String> cloud_song_update_metadata = result.getStringArrayList("cloud_song_update_metadata");
                 String cloud_song_remove = result.getString("cloud_song_remove");
                 String change_player_state_for_preview = result.getString("change_player_state_for_preview");
+                ArrayList<CloudSongItem> uploading_song_items_backup = result.getParcelableArrayList("uploading_song_items_backup");
 
                 if (single_song_select != null) {
                     cloud_explorer_dialog.dismiss();
@@ -105,6 +109,8 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                         player.pauseCurrentSong();
                     else
                         player.resumeCurrentSong();
+                } else if (uploading_song_items_backup != null) {
+                    song_items_backup = uploading_song_items_backup;
                 }
             }
         });
@@ -161,7 +167,9 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                     source_intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                     song_library_source_result.launch(source_intent);
                 } else if (itemId == R.id.source_cloud) {
-                    cloud_explorer_dialog = new CloudMediaExplorerFragment();
+                    Bundle backup_items = new Bundle();
+                    backup_items.putParcelableArrayList("song_items_backup", song_items_backup);
+                    cloud_explorer_dialog.setArguments(backup_items);
                     cloud_explorer_dialog.show(getSupportFragmentManager(), CloudMediaExplorerFragment.TAG);
                 }
 

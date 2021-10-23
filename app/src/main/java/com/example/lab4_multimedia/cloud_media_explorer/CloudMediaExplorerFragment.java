@@ -6,6 +6,7 @@ import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ClipDrawable;
@@ -23,6 +24,7 @@ import android.widget.Button;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -36,6 +38,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 import com.google.android.material.color.MaterialColors;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +50,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public static final String TAG = "CloudMediaExplorerDialog";
 
     private ActivityResultLauncher<Intent> cloud_song_upload_result;
+    private RecyclerView cloud_library_content;
     private CloudLibraryContentAdapter cloud_library_adapter;
     private final String cloud_song_directory = "songs/" + MainActivity.firebase_auth.getUid() + "/";
     private Button shuffle_play_button;
@@ -57,14 +61,18 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
+        Log.d(getTag(), "Dialog arguments : " + getArguments());
+        if (getArguments() != null && getArguments().getParcelableArrayList("song_items_backup") != null)
+            cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(getArguments().getParcelableArrayList("song_items_backup")), getParentFragmentManager());
+        else
+            cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_cloud_media_explorer, container, false);
 
-        RecyclerView cloud_library_content = rootView.findViewById(R.id.cloud_library_content);
+        cloud_library_content = rootView.findViewById(R.id.cloud_library_content);
         cloud_library_content.setLayoutManager(new LinearLayoutManager(getContext()));
         cloud_library_content.setAdapter(cloud_library_adapter);
         cloud_library_content.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
@@ -107,7 +115,15 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         return rootView;
     }
 
-    private void uploadSong(Uri local) { // TODO : Add song to beginning of list + progress bar
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        Bundle b = new Bundle();
+        b.putParcelableArrayList("uploading_song_items_backup", cloud_library_adapter.getUploadingItems());
+        getParentFragmentManager().setFragmentResult("cloud_explorer_results", b);
+        super.onDismiss(dialog);
+    }
+
+    private void uploadSong(Uri local) { // TODO : Check if song already in cloud ?
         StorageMetadata metadata = new StorageMetadata.Builder()
                 .setCustomMetadata("title", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_TITLE, false))
                 .setCustomMetadata("artist", MediaPlayerFragment.getSongMetadata(requireContext(), local, MediaMetadataRetriever.METADATA_KEY_ARTIST, false))
@@ -117,8 +133,25 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                 + metadata.getCustomMetadata("title") + "_"
                 + metadata.getCustomMetadata("artist") + "_"
                 + System.currentTimeMillis());
-        // TODO : Check if song already in cloud ?
-        song_ref.putFile(local, metadata).addOnCompleteListener(task -> {
+
+        CloudSongItem new_song = new CloudSongItem(local, metadata.getCustomMetadata("title"), metadata.getCustomMetadata("artist"));
+        cloud_library_adapter.addSong(new_song, true);
+        cloud_library_content.scrollToPosition(0);
+
+        int song_item_position = cloud_library_adapter.getItemPosition(local);
+        if (song_item_position == -1) {
+            Log.e(getTag(), "Could not find item in adapter !");
+            return;
+        }
+
+        UploadTask upload_task = song_ref.putFile(local, metadata);
+
+        cloud_library_adapter.getItem(song_item_position).setUploadMax((int) upload_task.getSnapshot().getTotalByteCount());
+        upload_task.addOnProgressListener(snapshot -> {
+            CloudSongItem uploading_item = cloud_library_adapter.getItem(cloud_library_adapter.getItemPosition(local));
+            if (uploading_item != null)
+                uploading_item.setUploadCurrent((int) snapshot.getBytesTransferred());
+        }).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
                 Log.d(getTag(), "Uploaded file (" + local + ") successfully !");
             } else {
@@ -131,9 +164,13 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
             return song_ref.getDownloadUrl();
         }).addOnCompleteListener(task -> {
             if (task.isSuccessful()) {
-                CloudSongItem new_song = new CloudSongItem(task.getResult(), metadata.getCustomMetadata("title"), metadata.getCustomMetadata("artist"));
-                cloud_library_adapter.addSong(new_song);
-                sendCacheMetadataInfo(new_song);
+                int item_pos = cloud_library_adapter.getItemPosition(local);
+                Log.d(getTag(), "Updated url for item " + item_pos);
+                if (item_pos != -1) {
+                    cloud_library_adapter.getItem(item_pos).setUrl(task.getResult());
+                    cloud_library_adapter.notifyItemChanged(item_pos);
+                    sendCacheMetadataInfo(new_song);
+                }
             } else {
                 Log.e(getTag(), "Could not retrieve file url after upload !");
             }
@@ -141,7 +178,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     }
 
     @SuppressWarnings("ConstantConditions")
-    private void refreshCloudLibrary() { // TODO : Sort song from most recent first
+    private void refreshCloudLibrary() {
         ClipDrawable shuffle_play_background_progress = (ClipDrawable) ((LayerDrawable)(shuffle_play_button.getBackground())).findDrawableByLayerId(R.id.clip_drawable);
         ObjectAnimator shuffle_play_progress_anim = ObjectAnimator.ofInt(shuffle_play_background_progress, "level", 0, 0);
         shuffle_play_progress_anim.setDuration(getResources().getInteger(R.integer.cloud_songs_loading_progress_speed));
@@ -159,7 +196,6 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
             }
         });
 
-        cloud_library_adapter.clearSongs();
         shuffle_play_button.setEnabled(false);
         shuffle_play_background_progress.setLevel(0);
 
@@ -181,7 +217,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                     }
                 });
 
-                for (StorageReference song : task.getResult().getItems()) {
+                for (StorageReference song : cloud_song_items) {
                     song.getMetadata().onSuccessTask(storageMetadata -> {
                         song.getDownloadUrl().onSuccessTask(uri -> {
                             if (swap_text_color.get()) {
@@ -196,7 +232,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                             CloudSongItem new_song = new CloudSongItem(uri,
                                     storageMetadata.getCustomMetadata("title"),
                                     storageMetadata.getCustomMetadata("artist"));
-                            cloud_library_adapter.addSong(new_song);
+                            cloud_library_adapter.addSong(new_song, false);
                             sendCacheMetadataInfo(new_song);
                             Log.d("CloudData", "[" + cloud_songs_count.get() + " / " + cloud_songs_total + "] Added " + new_song.toString());
                             return null;
