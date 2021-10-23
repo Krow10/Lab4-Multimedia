@@ -21,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -49,9 +50,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public static final String TAG = "CloudMediaExplorerDialog";
 
-    private ActivityResultLauncher<Intent> cloud_song_upload_result;
-    private RecyclerView cloud_library_content;
     private CloudLibraryContentAdapter cloud_library_adapter;
+    private RecyclerView cloud_library_recyclerview;
+    private ActivityResultLauncher<Intent> cloud_song_upload_result;
+    private TextView cloud_library_status_info;
     private final String cloud_song_directory = "songs/" + MainActivity.firebase_auth.getUid() + "/";
     private Button shuffle_play_button;
 
@@ -66,16 +68,27 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
             cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(getArguments().getParcelableArrayList("song_items_backup")), getParentFragmentManager());
         else
             cloud_library_adapter = new CloudLibraryContentAdapter(new ArrayList<>(), getParentFragmentManager());
+
+        cloud_library_adapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+            @Override
+            public void onItemRangeChanged(int positionStart, int itemCount) {
+                Log.d(getTag(), "Item range from fragment : start = " + positionStart + " / count = " + itemCount);
+                if (cloud_library_adapter.getSongUriList().size() == 1)
+                    enableShuffleButton(true);
+                else if (itemCount == 0)
+                    enableShuffleButton(false);
+            }
+        });
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_cloud_media_explorer, container, false);
 
-        cloud_library_content = rootView.findViewById(R.id.cloud_library_content);
-        cloud_library_content.setLayoutManager(new LinearLayoutManager(getContext()));
-        cloud_library_content.setAdapter(cloud_library_adapter);
-        cloud_library_content.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
+        cloud_library_recyclerview = rootView.findViewById(R.id.cloud_library_content);
+        cloud_library_recyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
+        cloud_library_recyclerview.setAdapter(cloud_library_adapter);
+        cloud_library_recyclerview.addItemDecoration(new DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL));
 
         cloud_song_upload_result = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
             if (result.getResultCode() == Activity.RESULT_OK) {
@@ -93,6 +106,9 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                 }
             }
         });
+
+        cloud_library_status_info = rootView.findViewById(R.id.cloud_library_status_info);
+        setCloudLibraryStatusInfo(MainActivity.getUsername() + "'s library");
 
         shuffle_play_button = rootView.findViewById(R.id.cloud_shuffle_play_button);
         shuffle_play_button.setOnClickListener(v -> { // No need to shuffle since the order of the item is already randomized through asynchronous loading from the cloud
@@ -136,7 +152,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
 
         CloudSongItem new_song = new CloudSongItem(local, metadata.getCustomMetadata("title"), metadata.getCustomMetadata("artist"));
         cloud_library_adapter.addSong(new_song, true);
-        cloud_library_content.scrollToPosition(0);
+        cloud_library_recyclerview.scrollToPosition(0);
 
         int song_item_position = cloud_library_adapter.getItemPosition(local);
         if (song_item_position == -1) {
@@ -191,8 +207,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         shuffle_text_color_anim.setInterpolator(new FastOutSlowInInterpolator());
         shuffle_text_color_anim.addUpdateListener(animation -> shuffle_play_button.setTextColor((int) animation.getAnimatedValue()));
 
-        shuffle_play_button.setEnabled(false);
-        shuffle_play_background_progress.setLevel(0);
+        enableShuffleButton(false);
 
         StorageReference song_directory = MainActivity.firebase_storage.getReference(cloud_song_directory);
         song_directory.listAll().addOnCompleteListener(task -> {
@@ -250,5 +265,14 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
         } catch (IllegalStateException e) {
             Log.e(getTag(), "Could not cache metadata for " + new_song + " : " + e.getMessage());
         }
+    }
+
+    private void setCloudLibraryStatusInfo(final String status) {
+        cloud_library_status_info.setText(status);
+    }
+
+    private void enableShuffleButton(final boolean enable) {
+        shuffle_play_button.setEnabled(enable);
+        ((ClipDrawable) ((LayerDrawable)(shuffle_play_button.getBackground())).findDrawableByLayerId(R.id.clip_drawable)).setLevel(enable ? 10000 : 0);
     }
 }

@@ -17,23 +17,19 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.lab4_multimedia.MainActivity;
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.media_player.MediaPlayerMainActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Objects;
 
 public class SignInActivity extends AppCompatActivity {
-    private FirebaseAuth firebase_auth;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_in);
-
-        firebase_auth = FirebaseAuth.getInstance();
 
         MaterialToolbar navigation_bar = findViewById(R.id.sign_in_navigation_bar);
         setSupportActionBar(navigation_bar);
@@ -70,11 +66,11 @@ public class SignInActivity extends AppCompatActivity {
             final String email = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_in_email))).getText()).toString();
             final String password = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_in_password))).getText()).toString();
 
-            firebase_auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+            MainActivity.firebase_auth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    Log.d("SignIn", "User signed in : " + email);
+                    Log.d("SignIn", "User signed in : " + MainActivity.firebase_auth.getCurrentUser());
                     Intent start_media_player = new Intent(SignInActivity.this, MediaPlayerMainActivity.class);
-                    start_media_player.putExtra("signed_in_has", Objects.requireNonNull(firebase_auth.getCurrentUser()).getEmail());
+                    start_media_player.putExtra("signed_in_has", MainActivity.getUsername());
                     start_media_player.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(start_media_player);
                     finish();

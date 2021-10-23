@@ -15,6 +15,8 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.storage.FirebaseStorage;
 
+import java.util.Objects;
+
 public class MainActivity extends AppCompatActivity {
     public static FirebaseAuth firebase_auth;
     public static FirebaseStorage firebase_storage;
@@ -49,11 +51,15 @@ public class MainActivity extends AppCompatActivity {
         if(currentUser != null) {
             Log.d("Main", "User " + currentUser.getEmail() + " is logged in !");
             Intent start_media_player = new Intent(MainActivity.this, MediaPlayerMainActivity.class);
-            start_media_player.putExtra("signed_in_has", currentUser.getEmail());
+            start_media_player.putExtra("signed_in_has", getUsername());
             startActivity(start_media_player);
             finish();
         } else {
             Log.d("Main", "No user logged in");
         }
+    }
+
+    public static String getUsername() {
+        return Objects.requireNonNull(firebase_auth.getCurrentUser()).getDisplayName();
     }
 }

@@ -8,7 +8,7 @@
     app:layout_behavior="@string/bottom_sheet_behavior">
 
     <TextView
-        android:id="@+id/cloud_library_title"
+        android:id="@+id/cloud_library_status_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
@@ -21,7 +21,7 @@
         android:id="@+id/cloud_shuffle_play_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/cloud_library_title"
+        app:layout_constraintTop_toBottomOf="@id/cloud_library_status_info"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@id/cloud_add_songs_button"
         android:layout_marginTop="10dp"
@@ -36,7 +36,7 @@
         android:id="@+id/cloud_add_songs_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/cloud_library_title"
+        app:layout_constraintTop_toBottomOf="@id/cloud_library_status_info"
         app:layout_constraintLeft_toRightOf="@id/cloud_shuffle_play_button"
         app:layout_constraintRight_toRightOf="parent"
         android:layout_marginTop="10dp"

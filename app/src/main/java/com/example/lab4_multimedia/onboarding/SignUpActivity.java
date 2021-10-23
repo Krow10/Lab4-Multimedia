@@ -17,23 +17,20 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.lab4_multimedia.MainActivity;
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.media_player.MediaPlayerMainActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.textfield.TextInputEditText;
-import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 import java.util.Objects;
 
 public class SignUpActivity extends AppCompatActivity {
-    private FirebaseAuth firebase_auth;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
-
-        firebase_auth = FirebaseAuth.getInstance();
 
         MaterialToolbar navigation_bar = findViewById(R.id.sign_up_navigation_bar);
         setSupportActionBar(navigation_bar);
@@ -67,18 +64,21 @@ public class SignUpActivity extends AppCompatActivity {
 
         Button sign_up_action = findViewById(R.id.sign_up_action_button);
         sign_up_action.setOnClickListener(v -> {
-            final String username = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_up_username))).getText()).toString(); // TODO : Use this field :))
+            final String username = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_up_username))).getText()).toString();
             final String email = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_up_email))).getText()).toString();
             final String password = Objects.requireNonNull(((TextInputEditText) (findViewById(R.id.sign_up_password))).getText()).toString();
 
-            firebase_auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+            MainActivity.firebase_auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    Log.d("SignUp", "User created : " + email);
-                    Intent start_media_player = new Intent(SignUpActivity.this, MediaPlayerMainActivity.class);
-                    start_media_player.putExtra("signed_in_has", Objects.requireNonNull(firebase_auth.getCurrentUser()).getEmail());
-                    start_media_player.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(start_media_player);
-                    finish();
+                    Objects.requireNonNull(MainActivity.firebase_auth.getCurrentUser()).updateProfile(new UserProfileChangeRequest.Builder()
+                            .setDisplayName(username).build()).addOnCompleteListener(task1 -> {
+                            Log.d("SignUp", "User created : " + MainActivity.firebase_auth.getCurrentUser());
+                            Intent start_media_player = new Intent(SignUpActivity.this, MediaPlayerMainActivity.class);
+                            start_media_player.putExtra("signed_in_has", MainActivity.getUsername());
+                            start_media_player.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                            startActivity(start_media_player);
+                            finish();
+                        });
                 } else {
                     Log.w("SignUp", "Failed : " + task.getException());
                 }
