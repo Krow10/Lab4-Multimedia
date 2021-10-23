@@ -49,12 +49,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
     public static final String TAG = "CloudMediaExplorerDialog";
+    private final String cloud_song_directory = "songs/" + MainActivity.firebase_auth.getUid() + "/";
 
     private CloudLibraryContentAdapter cloud_library_adapter;
     private RecyclerView cloud_library_recyclerview;
     private ActivityResultLauncher<Intent> cloud_song_upload_result;
     private TextView cloud_library_status_info;
-    private final String cloud_song_directory = "songs/" + MainActivity.firebase_auth.getUid() + "/";
     private Button shuffle_play_button;
 
     public CloudMediaExplorerFragment() {}
@@ -75,7 +75,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                 Log.d(getTag(), "Item range from fragment : start = " + positionStart + " / count = " + itemCount);
                 if (cloud_library_adapter.getSongUriList().size() == 1)
                     enableShuffleButton(true);
-                else if (itemCount == 0)
+                else if (cloud_library_adapter.getSongUriList().size() == 0)
                     enableShuffleButton(false);
             }
         });
@@ -150,8 +150,10 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                 + metadata.getCustomMetadata("artist") + "_"
                 + System.currentTimeMillis());
 
+        UploadTask upload_task = song_ref.putFile(local, metadata);
         CloudSongItem new_song = new CloudSongItem(local, metadata.getCustomMetadata("title"), metadata.getCustomMetadata("artist"));
-        cloud_library_adapter.addSong(new_song, true);
+        new_song.setUploadMax((int) upload_task.getSnapshot().getTotalByteCount());
+        cloud_library_adapter.addSong(new_song);
         cloud_library_recyclerview.scrollToPosition(0);
 
         int song_item_position = cloud_library_adapter.getItemPosition(local);
@@ -160,19 +162,15 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
             return;
         }
 
-        UploadTask upload_task = song_ref.putFile(local, metadata);
-
-        cloud_library_adapter.getItem(song_item_position).setUploadMax((int) upload_task.getSnapshot().getTotalByteCount());
         upload_task.addOnProgressListener(snapshot -> {
             CloudSongItem uploading_item = cloud_library_adapter.getItem(cloud_library_adapter.getItemPosition(local));
             if (uploading_item != null)
                 uploading_item.setUploadCurrent((int) snapshot.getBytesTransferred());
         }).addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
+            if (task.isSuccessful())
                 Log.d(getTag(), "Uploaded file (" + local + ") successfully !");
-            } else {
+            else
                 Log.e(getTag(), "Could not upload file (" + local + ") : " + task.getException());
-            }
         }).continueWithTask(task -> {
             if (!task.isSuccessful())
                 throw Objects.requireNonNull(task.getException());
@@ -242,7 +240,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
                             CloudSongItem new_song = new CloudSongItem(uri,
                                     storageMetadata.getCustomMetadata("title"),
                                     storageMetadata.getCustomMetadata("artist"));
-                            cloud_library_adapter.addSong(new_song, false);
+                            cloud_library_adapter.addSong(new_song);
                             sendCacheMetadataInfo(new_song);
                             Log.d("CloudData", "[" + cloud_songs_count.get() + " / " + cloud_songs_total + "] Added " + new_song.toString());
                             return null;
@@ -273,6 +271,7 @@ public class CloudMediaExplorerFragment extends BottomSheetDialogFragment {
 
     private void enableShuffleButton(final boolean enable) {
         shuffle_play_button.setEnabled(enable);
+        shuffle_play_button.setTextColor(enable ? Color.WHITE : ResourcesCompat.getColor(getResources(), R.color.disabled, null));
         ((ClipDrawable) ((LayerDrawable)(shuffle_play_button.getBackground())).findDrawableByLayerId(R.id.clip_drawable)).setLevel(enable ? 10000 : 0);
     }
 }

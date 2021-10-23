@@ -138,25 +138,17 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
                 }).setNegativeButton("CANCEL", null).show();
         });
 
+        holder.itemView.setOnClickListener(song_item.isUploading() ? null : new CloudSongItemListener(parent_dialog_fm, song_item.getUrl()));
+        holder.song_upload_progress.setVisibility(song_item.isUploading() ? View.VISIBLE : View.INVISIBLE);
         if (song_item.isUploading()) {
-            holder.itemView.setOnClickListener(null);
-            holder.song_upload_progress.setVisibility(View.VISIBLE);
             holder.song_upload_progress.setMax(song_item.getUploadMax());
             holder.song_upload_progress.setProgress(song_item.getUploadCurrent());
-
-            holder.song_title_view.setEnabled(false);
-            holder.song_artist_view.setEnabled(false);
-            holder.song_edit_metadata.setEnabled(false);
-            holder.song_cloud_remove.setEnabled(false);
-        } else {
-            holder.itemView.setOnClickListener(new CloudSongItemListener(parent_dialog_fm, song_item.getUrl()));
-            holder.song_upload_progress.setVisibility(View.INVISIBLE);
-
-            holder.song_title_view.setEnabled(true);
-            holder.song_artist_view.setEnabled(true);
-            holder.song_edit_metadata.setEnabled(true);
-            holder.song_cloud_remove.setEnabled(true);
         }
+
+        holder.song_title_view.setEnabled(!song_item.isUploading());
+        holder.song_artist_view.setEnabled(!song_item.isUploading());
+        holder.song_edit_metadata.setEnabled(!song_item.isUploading());
+        holder.song_cloud_remove.setEnabled(!song_item.isUploading());
     }
 
     @Override
@@ -197,8 +189,8 @@ public class CloudLibraryContentAdapter extends RecyclerView.Adapter<CloudLibrar
         return uris;
     }
 
-    public void addSong(CloudSongItem new_song, boolean addToTop) {
-        int insert_index = addToTop ? 0 : getItemCount();
+    public void addSong(CloudSongItem new_song) {
+        int insert_index = new_song.isUploading() ? 0 : getItemCount();
         song_library.add(insert_index, new_song);
         notifyItemInserted(insert_index);
     }

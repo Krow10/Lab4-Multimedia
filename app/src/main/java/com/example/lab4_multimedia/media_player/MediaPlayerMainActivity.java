@@ -122,51 +122,43 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
         });
 
         song_library_source_result = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK) {
-                        Intent data = result.getData();
-                        if (data != null) { // checking empty selection
-                            if (data.getClipData() != null) { // checking multiple selection or not
-                                List<Uri> new_playlist = new ArrayList<>();
-                                for (int i = 0; i < data.getClipData().getItemCount(); i++) { // NB : Selection order is preserved from chooser activity depending on devices
-                                    Uri song_uri = data.getClipData().getItemAt(i).getUri();
-                                    new_playlist.add(song_uri);
-                                    Log.d("NewSong", song_uri.toString());
-                                }
-
-                                player.createPlaylist(new_playlist);
-                                // Snackbar automatically dismiss when action is clicked
-                                showSnackbar("Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", findViewById(R.id.song_library_fab));
-                            } else {
-                                Log.d("NewSong", data.getData().toString());
-                                player.changeCurrentSong(data.getData());
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK) {
+                    Intent data = result.getData();
+                    if (data != null) { // checking empty selection
+                        if (data.getClipData() != null) { // checking multiple selection or not
+                            List<Uri> new_playlist = new ArrayList<>();
+                            for (int i = 0; i < data.getClipData().getItemCount(); i++) { // NB : Selection order is preserved from chooser activity depending on devices
+                                Uri song_uri = data.getClipData().getItemAt(i).getUri();
+                                new_playlist.add(song_uri);
+                                Log.d("NewSong", song_uri.toString());
                             }
+
+                            player.createPlaylist(new_playlist);
+                            // Snackbar automatically dismiss when action is clicked
+                            showSnackbar("Playlist created ! (" + data.getClipData().getItemCount() + " songs added)", findViewById(R.id.song_library_fab));
+                        } else {
+                            Log.d("NewSong", data.getData().toString());
+                            player.changeCurrentSong(data.getData());
                         }
                     }
-                });
+                }
+            });
 
         BottomAppBar app_bar = findViewById(R.id.bottom_app_bar);
-        if (offline_mode) {
-            app_bar.getMenu().findItem(R.id.action_sign_in_or_out).setTitle(getResources().getString(R.string.onboarding_sign_in));
-            app_bar.setOnMenuItemClickListener(item -> {
-                if (item.getItemId() == R.id.action_sign_in_or_out) {
-                    startActivity(new Intent(MediaPlayerMainActivity.this, SignInActivity.class));
-                    finish();
-                }
-
-                return true;
-            });
-        } else {
-            app_bar.setOnMenuItemClickListener(item -> {
-                if (item.getItemId() == R.id.action_sign_in_or_out) {
+        app_bar.getMenu().findItem(R.id.action_sign_in_or_out).setTitle(
+                offline_mode ? getResources().getString(R.string.onboarding_sign_in) : getResources().getString(R.string.sign_out));
+        app_bar.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_sign_in_or_out) {
+                if (!offline_mode)
                     MainActivity.firebase_auth.signOut();
-                    startActivity(new Intent(MediaPlayerMainActivity.this, MainActivity.class));
-                    finish();
-                }
 
-                return true;
-            });
-        }
+                startActivity(new Intent(MediaPlayerMainActivity.this, offline_mode ? SignInActivity.class : MainActivity.class));
+                finish();
+            }
+
+            return true;
+        });
 
         FloatingActionButton song_library_fab = findViewById(R.id.song_library_fab);
         song_library_fab.setOnClickListener(v -> {
