@@ -16,7 +16,7 @@
         app:showAsAction="never"/>
 
     <item
-        android:id="@+id/action_sign_out"
+        android:id="@+id/action_sign_in_or_out"
         android:title="@string/sign_out"
         android:contentDescription="@string/sign_out_content_desc"
         app:showAsAction="never"/>

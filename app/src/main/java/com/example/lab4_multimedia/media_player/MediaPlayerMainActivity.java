@@ -20,6 +20,7 @@ import com.example.lab4_multimedia.MainActivity;
 import com.example.lab4_multimedia.R;
 import com.example.lab4_multimedia.cloud_media_explorer.CloudMediaExplorerFragment;
 import com.example.lab4_multimedia.cloud_media_explorer.CloudSongItem;
+import com.example.lab4_multimedia.onboarding.SignInActivity;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomappbar.BottomAppBar;
@@ -142,16 +143,27 @@ public class MediaPlayerMainActivity extends AppCompatActivity {
                 });
 
         BottomAppBar app_bar = findViewById(R.id.bottom_app_bar);
-        app_bar.getMenu().findItem(R.id.action_sign_out).setEnabled(!offline_mode); // TODO : Remove option entirely from menu instead ?
-        app_bar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.action_sign_out) {
-                MainActivity.firebase_auth.signOut();
-                startActivity(new Intent(MediaPlayerMainActivity.this, MainActivity.class));
-                finish();
-            }
+        if (offline_mode) {
+            app_bar.getMenu().findItem(R.id.action_sign_in_or_out).setTitle(getResources().getString(R.string.onboarding_sign_in));
+            app_bar.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.action_sign_in_or_out) {
+                    startActivity(new Intent(MediaPlayerMainActivity.this, SignInActivity.class));
+                    finish();
+                }
 
-            return true;
-        });
+                return true;
+            });
+        } else {
+            app_bar.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.action_sign_in_or_out) {
+                    MainActivity.firebase_auth.signOut();
+                    startActivity(new Intent(MediaPlayerMainActivity.this, MainActivity.class));
+                    finish();
+                }
+
+                return true;
+            });
+        }
 
         FloatingActionButton song_library_fab = findViewById(R.id.song_library_fab);
         song_library_fab.setOnClickListener(v -> {
